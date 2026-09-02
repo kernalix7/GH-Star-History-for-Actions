@@ -6,6 +6,12 @@ A self-contained GitHub Action that lets every repository collect, store, and
 render its own star history. It uses the repository's short-lived automatic
 `GITHUB_TOKEN`; no personal access token or hosted service is required.
 
+> [!IMPORTANT]
+> This is an independent project adapted from the open-source Star History
+> renderer. It is not affiliated with, endorsed by, or an official distribution
+> of the Star History project. References to Star History identify the upstream
+> project for attribution only.
+
 ## Live example
 
 This chart is generated from this repository's own Star history and committed
@@ -153,8 +159,16 @@ npm run check
 
 ## License and attribution
 
-The project source is MIT licensed. Its chart renderer is adapted from
-[Star History](https://github.com/star-history/star-history), also MIT licensed.
-The pinned D3 build is BSD-3-Clause licensed.
-The embedded Patrick Hand font subset is separately licensed under SIL OFL 1.1.
-See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for attribution and terms.
+Except for the third-party components listed below, the original project code is
+licensed under the top-level [MIT License](LICENSE), copyright Kim DaeHyun.
+
+- The chart renderer is adapted from
+  [Star History](https://github.com/star-history/star-history), under the MIT
+  License.
+- The pinned D3 6.7.0 build is under the BSD 3-Clause License.
+- The embedded Patrick Hand font subset is under the SIL Open Font License 1.1.
+
+Third-party components retain their respective licenses; the top-level MIT
+License does not replace them. See
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the copyright notices,
+license texts, attribution, and non-affiliation statement.

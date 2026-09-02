@@ -1,5 +1,10 @@
 # Third-party notices
 
+Except for the components identified below, the original code in this
+repository is licensed under the top-level MIT License. Each third-party
+component retains its own license; the top-level license does not supersede
+those terms.
+
 ## Star History
 
 The generated chart renderer is adapted from the open-source
@@ -29,8 +34,11 @@ Star History is distributed under the MIT License:
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
 
-This project does not use the Star History name, logo, hosted service, or
-noncommercial xkcd font as its own branding.
+GH Star History for Actions is an independent project. It is not affiliated
+with, endorsed by, or an official distribution of the Star History project.
+References to Star History identify the upstream project for attribution only.
+This project does not reuse the Star History logo, hosted service, or its
+noncommercial xkcd font.
 
 ## D3
 
@@ -49,5 +57,7 @@ The generated SVG embeds an ASCII subset of Patrick Hand.
 Copyright (c) 2010-2012 Patrick Wagesreiter
 (mail@patrickwagesreiter.at)
 
-Patrick Hand is licensed under the SIL Open Font License, Version 1.1. The full
-license text is included in [`licenses/PatrickHand-OFL.txt`](licenses/PatrickHand-OFL.txt).
+Patrick Hand is licensed under the SIL Open Font License, Version 1.1. The
+embedded WOFF2 subset retains the font's copyright, license notice, and license
+URL in its metadata. The full license text is included in
+[`licenses/PatrickHand-OFL.txt`](licenses/PatrickHand-OFL.txt).

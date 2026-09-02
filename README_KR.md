@@ -6,6 +6,12 @@
 생성하도록 해주는 독립형 GitHub Action입니다. 저장소마다 자동으로 발급되는
 단기 `GITHUB_TOKEN`만 사용하므로 PAT와 외부 서버가 필요 없습니다.
 
+> [!IMPORTANT]
+> 이 프로젝트는 오픈소스 Star History 렌더러를 바탕으로 만든 독립
+> 프로젝트입니다. Star History 프로젝트와 제휴하거나 그 승인을 받은 공식
+> 배포판이 아닙니다. Star History에 대한 언급은 원본 프로젝트의 출처를 밝히기
+> 위한 용도로만 사용합니다.
+
 ## 실제 작동 예시
 
 아래 그래프는 이 저장소의 실제 Star 이력을 Action이 직접 생성해 전용
@@ -144,8 +150,15 @@ npm run check
 
 ## 라이선스와 출처
 
-프로젝트 소스는 MIT 라이선스로 배포됩니다. 그래프 렌더러는 MIT 라이선스의
-[Star History](https://github.com/star-history/star-history)를 바탕으로
-수정했습니다. 고정된 D3 빌드에는 BSD-3-Clause, 내장 Patrick Hand 폰트
-서브셋에는 SIL OFL 1.1이 각각 적용됩니다. 자세한 고지와 조건은
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)에 있습니다.
+아래 제3자 구성요소를 제외한 이 프로젝트의 자체 코드는 최상위
+[MIT 라이선스](LICENSE)로 배포되며 저작권자는 Kim DaeHyun입니다.
+
+- 그래프 렌더러는 MIT 라이선스의
+  [Star History](https://github.com/star-history/star-history)를 바탕으로
+  수정했습니다.
+- 고정된 D3 6.7.0 빌드에는 BSD 3-Clause 라이선스가 적용됩니다.
+- 내장 Patrick Hand 폰트 서브셋에는 SIL Open Font License 1.1이 적용됩니다.
+
+제3자 구성요소에는 각각의 원래 라이선스가 계속 적용되며, 최상위 MIT
+라이선스가 이를 대체하지 않습니다. 저작권 고지, 라이선스 전문, 출처 및
+비제휴 고지는 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)를 참고하세요.
