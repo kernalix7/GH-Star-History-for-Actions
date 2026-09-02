@@ -8,26 +8,30 @@
 
 ## 실제 작동 예시
 
-아래 그래프는 이 저장소의 실제 Star 이력을 Action이 직접 생성하고 다시
-커밋한 결과입니다.
+아래 그래프는 이 저장소의 실제 Star 이력을 Action이 직접 생성해 전용
+`star-history` 브랜치에 커밋한 결과입니다.
 
 <picture>
   <source
     media="(prefers-color-scheme: dark)"
-    srcset="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/main/.github/star-history/chart-dark.svg"
+    srcset="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/star-history/chart-dark.svg"
   >
   <img
     alt="GH Star History for Actions 실제 Star 이력"
-    src="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/main/.github/star-history/chart.svg"
+    src="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/star-history/chart.svg"
     width="900"
   >
 </picture>
 
-생성되는 파일은 다음과 같습니다.
+최초 실행에서는 별도의 `star-history` 브랜치를 만들고 다음 파일을 저장합니다.
 
-- `.github/star-history/history.json`
-- `.github/star-history/chart.svg`
-- `.github/star-history/chart-dark.svg`
+- `.gh-star-history` (내부 소유권 표시 파일)
+- `history.json`
+- `chart.svg`
+- `chart-dark.svg`
+
+생성 커밋은 기본 브랜치를 건드리지 않습니다.
+같은 이름의 기존 브랜치에 다른 파일이 있으면 덮어쓰지 않고 안전하게 중단합니다.
 
 ## 작동 방식
 
@@ -59,11 +63,11 @@
 <picture>
   <source
     media="(prefers-color-scheme: dark)"
-    srcset="https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/.github/star-history/chart-dark.svg"
+    srcset="https://raw.githubusercontent.com/OWNER/REPOSITORY/star-history/chart-dark.svg"
   >
   <img
     alt="GitHub star history"
-    src="https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/.github/star-history/chart.svg"
+    src="https://raw.githubusercontent.com/OWNER/REPOSITORY/star-history/chart.svg"
     width="900"
   >
 </picture>
@@ -74,6 +78,11 @@
 
 Action 게시, 여러 저장소 적용, 선택적인 버전 고정, 보호 브랜치 처리 방법은
 [설치 문서](docs/INSTALLATION.md)를 참고하세요.
+
+복사하는 파일에는 예약 시간, 쓰기 권한, 중앙 재사용 workflow 호출만 들어
+있습니다. `@main`을 사용하면 예약 실행마다 이 저장소의 최신 workflow와 Action
+구현을 자동으로 사용합니다. 예약 파일 자체는 각 대상 저장소의 기본 브랜치에
+계속 있어야 합니다.
 
 ## Git 이메일을 설정하는 이유
 
@@ -94,7 +103,7 @@ git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 | --- | --- | --- |
 | `github-token` | 필수 | `${{ github.token }}`을 전달합니다. |
 | `repository` | 실행 저장소 | `owner/name` 형식의 저장소입니다. |
-| `output-directory` | `.github/star-history` | 생성 파일을 저장할 디렉터리입니다. |
+| `output-directory` | `.github/star-history` | Action 내부 작업 디렉터리입니다. |
 | `title` | `Star History` | 그래프 제목입니다. |
 | `width` | `900` | SVG 너비이며 480–2400 범위로 제한됩니다. |
 | `height` | `600` | SVG 높이이며 320–1600 범위로 제한됩니다. |
@@ -104,12 +113,12 @@ git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
 예제 workflow는 `contents: write`를 사용합니다. GitHub의 제한된 stargazers
 API가 저장소의 쓰기 수준 협업 권한을 확인하며, 생성된 JSON과 SVG를 같은
-저장소에 커밋해야 하기 때문입니다.
+저장소의 전용 브랜치에 커밋해야 하기 때문입니다.
 
 토큰은 해당 workflow 실행과 해당 저장소에만 제한되고 작업 종료 후 만료됩니다.
-보안 수준을 더 높여야 하는 저장소에서는 Action을 검토한 커밋 SHA로 선택적으로
-고정할 수 있습니다. 신뢰할 수 없는 PR 코드에서는 쓰기 권한 workflow를
-실행하지 마세요.
+보안 수준을 더 높여야 하는 저장소에서는 재사용 workflow 호출을 검토한 전체
+커밋 SHA로 선택적으로 고정할 수 있습니다. 신뢰할 수 없는 PR 코드에서는 쓰기
+권한 workflow를 실행하지 마세요.
 
 활동이 60일 이상 없는 공개 저장소에서는 GitHub가 예약 workflow를 자동으로
 중지할 수 있습니다. 이 경우 수동 실행 버튼은 계속 사용할 수 있습니다.

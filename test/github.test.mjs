@@ -43,6 +43,28 @@ test("current total comes from repository metadata", async () => {
   }
 });
 
+test("transient GitHub failures are retried", async () => {
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  globalThis.fetch = async () => {
+    attempts += 1;
+    if (attempts < 3) {
+      return new Response(JSON.stringify({ message: "Service unavailable" }), {
+        status: 503,
+        headers: { "retry-after": "0" },
+      });
+    }
+    return new Response(JSON.stringify({ stargazers_count: 7 }), { status: 200 });
+  };
+
+  try {
+    assert.equal(await getCurrentStarCount("owner/repo", "test-token"), 7);
+    assert.equal(attempts, 3);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("API errors expose GitHub's accepted permissions hint", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async () => new Response(JSON.stringify({ message: "Resource not accessible by integration" }), {

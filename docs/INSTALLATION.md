@@ -2,163 +2,225 @@
 
 [한국어 안내](#한국어-설치-안내)
 
-## Publish this action
-
-The project must be available on GitHub before another repository can use it.
-
-1. Create a GitHub repository for this project and push the `main` branch.
-2. Run the included CI workflow and confirm that it passes.
-
-The included example follows `main`, so no release, tag, or commit SHA is
-required for normal personal use:
-
-```yaml
-uses: kernalix7/GH-Star-History-for-Actions@main
-```
-
-For a higher-assurance repository, you can optionally replace `main` with a
-reviewed full commit SHA:
-
-```yaml
-uses: OWNER/GH-Star-History-for-Actions@FULL_COMMIT_SHA
-```
-
-The action repository should normally be public. A private action repository
-requires additional GitHub Actions access configuration and may not be available
-across unrelated accounts or organizations.
-
 ## Install it in a target repository
 
-Copy `examples/star-history.yml` from this project unchanged to:
+Copy [`examples/star-history.yml`](../examples/star-history.yml) unchanged to:
 
 ```text
 .github/workflows/star-history.yml
 ```
 
-Commit and push the workflow to the target repository's default branch.
+Commit and push that one file to the target repository's default branch. No PAT,
+repository name, branch name, package installation, or Git identity setting is
+required in the target repository.
 
-The first scheduled run creates the files automatically. To generate them
-immediately instead of waiting for the next schedule, select:
+The first scheduled run creates a dedicated `star-history` branch. To run it
+immediately, select:
 
 ```text
 Actions → Update star history → Run workflow
 ```
 
-The first run creates the backfill and these files:
+The branch contains only:
 
 ```text
-.github/star-history/history.json
-.github/star-history/chart.svg
-.github/star-history/chart-dark.svg
+.gh-star-history
+history.json
+chart.svg
+chart-dark.svg
 ```
 
-Later scheduled runs update the observed total only when the generated files
-change.
+`.gh-star-history` is an internal ownership marker. If an existing branch with
+that name contains unrelated files or an unknown marker, the workflow fails
+safely instead of changing it. The repository's default branch therefore cannot
+itself be named `star-history`.
+
+Later runs restore `history.json` from that branch, add the current observation,
+and commit only when one of those files changed. Generated commits never touch
+the default branch.
+
+When upgrading from the older default-branch layout, the workflow searches the
+current checkout and, if necessary, the repository's earlier commits for the
+last legacy `history.json`. It then upgrades the data without discarding prior
+observations.
 
 ## Embed the graph
 
-Use raw GitHub URLs so both themes work reliably in a public README:
+Use raw GitHub URLs in a public README:
 
 ```html
 <picture>
   <source
     media="(prefers-color-scheme: dark)"
-    srcset="https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/.github/star-history/chart-dark.svg"
+    srcset="https://raw.githubusercontent.com/OWNER/REPOSITORY/star-history/chart-dark.svg"
   >
   <img
     alt="GitHub star history"
-    src="https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/.github/star-history/chart.svg"
+    src="https://raw.githubusercontent.com/OWNER/REPOSITORY/star-history/chart.svg"
     width="900"
   >
 </picture>
 ```
 
-Replace `OWNER`, `REPOSITORY`, and `BRANCH`.
+Replace only `OWNER` and `REPOSITORY`.
 
-## Protected default branches
+Raw private-repository files require authentication, so embedding them outside
+authenticated GitHub pages may not work.
 
-The example pushes generated files directly to the default branch. If branch
-rules reject that push, choose one of these approaches:
+## What updates automatically
 
-- allow GitHub Actions to bypass the rule for this workflow;
-- commit generated files to a dedicated branch and embed them from that branch;
-- modify the workflow to open a pull request instead of pushing directly.
+The small file in each target repository owns only its schedule and permission.
+Its job calls:
 
-Do not weaken an important branch rule solely for a chart.
+```yaml
+uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@main
+```
+
+Because it follows `@main`, each new cron or manual run resolves the current
+reusable workflow. That workflow also checks out the Action implementation from
+the exact same commit, so central publishing logic and renderer updates move
+together.
+
+The copied schedule file itself is not rewritten remotely. If its cron time,
+permission, or caller syntax ever needs to change, update that small file in the
+target repository. Scheduled workflows run only while that file exists on the
+target repository's default branch.
+
+## Version pinning
+
+Following `main` is convenient, but a branch reference is mutable. For a
+higher-assurance repository, replace `main` with a reviewed full commit SHA:
+
+```yaml
+uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@FULL_COMMIT_SHA
+```
+
+The reusable workflow uses its own resolved commit SHA when loading the Action,
+so this pins both pieces together. Pinned repositories do not receive central
+updates until you review and change the SHA.
+
+## Branch protection
+
+The workflow writes only to `star-history`, so normal protection on the default
+branch does not need an exception. If a ruleset covers every branch, allow this
+workflow's `GITHUB_TOKEN` to create and update `star-history`, or exclude that
+generated branch from rules intended for source code.
+
+Do not weaken important default-branch protections solely for a chart.
 
 ## Installing in many repositories
 
-Each repository must contain its own scheduled workflow because GitHub does not
-apply a cron trigger from one personal repository to every other repository.
-The same workflow file can be copied unchanged to every repository. Repositories
-following `main` automatically use the latest Action implementation on their next
-run. Teams that choose SHA pinning must update it through normal reviewed pull
-requests.
+Each repository needs its own copied schedule file because one repository's
+cron trigger cannot schedule workflows in other repositories. The same file can
+be copied unchanged: repository identity, default branch, token, and generated
+branch are resolved in the caller repository automatically.
 
 ---
 
 ## 한국어 설치 안내
 
-### Action 프로젝트 게시
-
-다른 저장소에서 사용하려면 이 프로젝트를 먼저 GitHub에 올려야 합니다.
-
-1. 이 프로젝트용 GitHub 저장소를 만들고 `main` 브랜치를 push합니다.
-2. 포함된 CI workflow가 통과하는지 확인합니다.
-
-기본 예제는 `main`을 사용하므로 개인 프로젝트에서는 릴리스, 태그, 커밋 SHA를
-별도로 만들 필요가 없습니다.
-
-```yaml
-uses: kernalix7/GH-Star-History-for-Actions@main
-```
-
-보안 수준을 더 높여야 하는 저장소에서는 `main` 대신 검토한 전체 커밋 SHA로
-선택적으로 고정할 수 있습니다.
-
-```yaml
-uses: OWNER/GH-Star-History-for-Actions@FULL_COMMIT_SHA
-```
-
-Action 저장소는 공개로 두는 것이 가장 간단합니다. 비공개 Action 저장소는 별도
-Actions 접근 설정이 필요하며 계정이나 조직 경계를 넘어 사용하지 못할 수 있습니다.
-
 ### 대상 저장소에 설치
 
-이 프로젝트의 `examples/star-history.yml`을 대상 저장소의 다음 경로에
-복사합니다.
+[`examples/star-history.yml`](../examples/star-history.yml)을 변경하지 않고 대상
+저장소의 다음 경로로 복사합니다.
 
 ```text
 .github/workflows/star-history.yml
 ```
 
-예제 파일을 변경하지 않고 대상 저장소의 기본 브랜치에 커밋하고 push합니다.
+이 파일 하나를 대상 저장소의 기본 브랜치에 커밋하고 push하면 됩니다. PAT,
+저장소 이름, 브랜치 이름, 패키지 설치, Git 작성자 설정은 필요하지 않습니다.
 
-다음 예약 실행에서 파일이 자동 생성됩니다. 기다리지 않고 즉시 만들고 싶다면
-GitHub에서 다음 메뉴를 실행합니다.
+최초 예약 실행에서는 전용 `star-history` 브랜치를 자동으로 만듭니다. 즉시
+실행하려면 다음 메뉴를 선택합니다.
 
 ```text
 Actions → Update star history → Run workflow
 ```
 
-최초 실행은 과거 구간을 재구성하고 다음 파일을 만듭니다.
+전용 브랜치에는 다음 파일만 들어갑니다.
 
 ```text
-.github/star-history/history.json
-.github/star-history/chart.svg
-.github/star-history/chart-dark.svg
+.gh-star-history
+history.json
+chart.svg
+chart-dark.svg
 ```
 
-이후 예약 실행은 관측값이 바뀌었을 때 생성 파일을 갱신합니다.
+`.gh-star-history`는 내부 소유권 표시 파일입니다. 같은 이름의 기존 브랜치에
+관계없는 파일이나 알 수 없는 표시 파일이 있으면 workflow는 이를 변경하지 않고
+안전하게 실패합니다. 따라서 저장소의 기본 브랜치 자체가 `star-history`여서는
+안 됩니다.
 
-### 보호 브랜치
+이후 실행은 해당 브랜치의 `history.json`을 복원하고 현재 관측값을 추가한 뒤,
+파일이 실제로 달라졌을 때만 커밋합니다. 생성 커밋은 기본 브랜치에 들어가지
+않습니다.
 
-예제는 생성 파일을 기본 브랜치에 직접 push합니다. 브랜치 규칙이 이를 거절한다면
-전용 데이터 브랜치를 사용하거나, workflow가 pull request를 만들도록 변경하세요.
-그래프 하나를 위해 중요한 브랜치 보호 규칙을 약화하는 것은 권장하지 않습니다.
+기존 기본 브랜치 저장 방식에서 업그레이드할 때는 현재 checkout과 필요시 과거
+커밋 전체에서 마지막 `history.json`을 찾아 이전 관측값을 버리지 않고 새 형식으로
+올립니다.
+
+### 그래프 넣기
+
+공개 저장소 README에는 다음 주소를 사용합니다.
+
+```html
+<picture>
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="https://raw.githubusercontent.com/OWNER/REPOSITORY/star-history/chart-dark.svg"
+  >
+  <img
+    alt="GitHub star history"
+    src="https://raw.githubusercontent.com/OWNER/REPOSITORY/star-history/chart.svg"
+    width="900"
+  >
+</picture>
+```
+
+`OWNER`와 `REPOSITORY`만 바꾸면 됩니다. 비공개 저장소의 raw 파일은 인증이
+필요하므로 외부 페이지에서는 이미지가 표시되지 않을 수 있습니다.
+
+### 자동으로 갱신되는 범위
+
+각 대상 저장소의 작은 파일은 예약 시간과 권한만 담당하며 다음 중앙 workflow를
+호출합니다.
+
+```yaml
+uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@main
+```
+
+`@main`을 사용하면 새 cron 실행이나 수동 실행이 시작될 때마다 중앙 저장소의
+최신 재사용 workflow를 불러옵니다. 재사용 workflow는 자신과 정확히 같은
+커밋의 Action 구현을 불러오므로 저장 로직과 그래프 코드가 함께 갱신됩니다.
+
+대상 저장소에 복사한 예약 파일 자체를 중앙에서 덮어쓰지는 않습니다. cron 시간,
+권한, 호출 형식을 바꿔야 할 때만 대상 저장소의 작은 파일을 수정하면 됩니다.
+예약 실행을 위해 이 파일은 대상 저장소의 기본 브랜치에 있어야 합니다.
+
+### 버전 고정
+
+`main`은 편리하지만 내용이 바뀔 수 있습니다. 보안 수준을 더 높이려면 검토한
+전체 커밋 SHA로 고정합니다.
+
+```yaml
+uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@FULL_COMMIT_SHA
+```
+
+이 경우 재사용 workflow와 Action 구현이 함께 고정되며, SHA를 직접 바꾸기
+전까지 중앙 업데이트가 자동 적용되지 않습니다.
+
+### 브랜치 보호
+
+workflow는 `star-history` 브랜치에만 씁니다. 따라서 일반적인 기본 브랜치 보호
+규칙에는 예외가 필요 없습니다. 모든 브랜치에 적용되는 ruleset이 있다면 이
+workflow의 `GITHUB_TOKEN`이 `star-history`를 만들고 갱신할 수 있게 허용하거나,
+소스 코드용 규칙에서 생성 브랜치를 제외하세요.
+
+그래프 하나를 위해 중요한 기본 브랜치 보호를 약화하지 마세요.
 
 ### 여러 저장소에 적용
 
-GitHub는 개인 저장소 하나의 cron을 다른 모든 저장소에 자동 적용하지 않습니다.
-따라서 각 저장소에 작은 예약 workflow 파일이 하나씩 필요합니다. `main`을
-사용하면 다음 실행부터 Action의 최신 구현이 자동 적용됩니다.
+저장소 하나의 cron이 다른 저장소의 workflow까지 예약할 수는 없으므로 각
+저장소에 작은 예약 파일 하나가 필요합니다. 같은 파일을 그대로 복사해도 저장소
+이름, 기본 브랜치, 토큰, 생성 브랜치를 대상 저장소 기준으로 자동 인식합니다.

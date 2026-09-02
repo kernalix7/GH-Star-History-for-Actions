@@ -10,21 +10,37 @@ permissions:
 ```
 
 GitHub creates `GITHUB_TOKEN` for the caller repository and workflow run. The
-token is not a personal access token, is not shared with other repositories, and
-expires after the job. `contents: write` is needed both for GitHub's restricted
-stargazers endpoint and for committing generated files.
+token is not a personal access token and expires after the job. Its permissions
+apply to the caller repository. `contents: write` is needed both for GitHub's
+restricted stargazers endpoint and for committing generated files to that
+repository's dedicated `star-history` branch.
 
 The Action does not send the token or collected data to a third-party service.
-It communicates with `api.github.com` and writes files inside the checked-out
-repository.
+It communicates with GitHub, loads the reusable workflow and Action code from
+this repository, and writes aggregate output to the caller repository.
 
 ## Safe usage
 
-- For higher-assurance repositories, pin the Action to a reviewed full commit SHA.
+- A caller using `@main` automatically trusts future commits to this repository.
+- For higher-assurance repositories, pin the reusable workflow call to a
+  reviewed full commit SHA. The Action implementation is loaded from that same
+  resolved commit.
 - Do not run this write-enabled job against untrusted pull-request code.
 - Keep repository and organization Action policies enabled.
 - Review dependency and workflow changes before updating the pinned SHA.
 - Avoid passing a PAT; the caller repository's `${{ github.token }}` is enough.
+- Keep normal default-branch protection enabled. Generated commits go only to
+  `star-history` unless you modify the workflow.
+- The generated branch carries a management marker and accepts only the marker,
+  JSON history, and two SVG files. An unrelated branch with the same name is
+  rejected rather than overwritten. Symbolic links and other non-regular Git
+  entries are also rejected.
+- Schema 2 records GitHub's stable numeric repository ID. A history file from a
+  different repository is rejected, while repository renames and transfers keep
+  their existing observations.
+- Output-directory components and existing output files must be real directories
+  and regular files inside the checked-out repository; symlink escapes are not
+  followed.
 
 ## Stored data
 

@@ -1,0 +1,171 @@
+name: Generate star history
+
+on:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out caller repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Restore collected history
+        shell: bash
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          history_branch="star-history"
+          legacy_history=".github/star-history/history.json"
+          marker_file=".gh-star-history"
+          expected_marker=$'GH-Star-History-for-Actions managed branch\nformat: 1'
+
+          if test "$DEFAULT_BRANCH" = "$history_branch"; then
+            echo "::error::The default branch cannot be named star-history."
+            exit 1
+          fi
+
+          mkdir -p .github/star-history
+
+          remote_branch="$(git ls-remote --heads origin \
+            "refs/heads/${history_branch}")"
+
+          if test -n "$remote_branch"; then
+            git fetch --no-tags origin \
+              "+refs/heads/${history_branch}:refs/remotes/origin/${history_branch}"
+
+            unexpected_files="$(
+              git ls-tree -r --name-only "origin/${history_branch}" |
+                grep -Ev '^(\.gh-star-history|history\.json|chart\.svg|chart-dark\.svg)$' || true
+            )"
+
+            if test -n "$unexpected_files"; then
+              echo "::error::The star-history branch already exists and contains unmanaged files."
+              echo "$unexpected_files"
+              exit 1
+            fi
+
+            unsafe_entries="$(
+              git ls-tree -r "origin/${history_branch}" |
+                awk '$1 != "100644" { print $1 " " $4 }'
+            )"
+
+            if test -n "$unsafe_entries"; then
+              echo "::error::The star-history branch contains a symbolic link or another unsupported entry."
+              echo "$unsafe_entries"
+              exit 1
+            fi
+
+            if git cat-file -e \
+              "origin/${history_branch}:${marker_file}" 2>/dev/null; then
+              actual_marker="$(git show \
+                "origin/${history_branch}:${marker_file}")"
+              if test "$actual_marker" != "$expected_marker"; then
+                echo "::error::The star-history branch has an unknown management marker."
+                exit 1
+              fi
+            else
+              echo "::warning::Adopting a legacy star-history branch without a management marker."
+            fi
+
+            if git cat-file -e \
+              "origin/${history_branch}:history.json" 2>/dev/null; then
+              git show "origin/${history_branch}:history.json" \
+                > "$legacy_history"
+              echo "Restored history.json from the star-history branch."
+            else
+              echo "::error::The existing star-history branch has no history.json."
+              exit 1
+            fi
+          elif test -f "$legacy_history"; then
+            echo "Migrating history.json from the default branch."
+          elif git cat-file -e \
+            "HEAD^:${legacy_history}" 2>/dev/null; then
+            git show "HEAD^:${legacy_history}" > "$legacy_history"
+            echo "Migrating history.json from the previous commit."
+          else
+            if test "$(git rev-parse --is-shallow-repository)" = "true"; then
+              echo "Searching the full default-branch history for legacy data."
+              git fetch --no-tags --unshallow origin
+            fi
+
+            legacy_commit=""
+            while IFS= read -r candidate; do
+              if git cat-file -e \
+                "${candidate}:${legacy_history}" 2>/dev/null; then
+                legacy_commit="$candidate"
+                break
+              fi
+            done < <(git rev-list HEAD -- "$legacy_history")
+
+            if test -n "$legacy_commit"; then
+              git show "${legacy_commit}:${legacy_history}" \
+                > "$legacy_history"
+              echo "Migrating history.json from commit ${legacy_commit}."
+            else
+              echo "No previous history found; the first backfill will be created."
+            fi
+          fi
+
+      - name: Check out action implementation
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .star-history-action
+          persist-credentials: false
+
+      - name: Generate star history
+        uses: ./.star-history-action
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Publish generated history
+        shell: bash
+        run: |
+          publish_files="${RUNNER_TEMP}/star-history-files"
+          publish_worktree="${RUNNER_TEMP}/star-history-branch"
+          mkdir -p "$publish_files"
+
+          cp .github/star-history/history.json "$publish_files/history.json"
+          cp .github/star-history/chart.svg "$publish_files/chart.svg"
+          cp .github/star-history/chart-dark.svg "$publish_files/chart-dark.svg"
+
+          if git show-ref --verify --quiet \
+            refs/remotes/origin/star-history; then
+            git worktree add --detach "$publish_worktree" origin/star-history
+          else
+            git worktree add --detach "$publish_worktree" HEAD
+            git -C "$publish_worktree" switch --orphan star-history
+          fi
+
+          cp "$publish_files/history.json" "$publish_worktree/history.json"
+          cp "$publish_files/chart.svg" "$publish_worktree/chart.svg"
+          cp "$publish_files/chart-dark.svg" "$publish_worktree/chart-dark.svg"
+
+          printf '%s\n' \
+            "GH-Star-History-for-Actions managed branch" \
+            "format: 1" \
+            > "$publish_worktree/.gh-star-history"
+
+          git -C "$publish_worktree" add -- \
+            .gh-star-history history.json chart.svg chart-dark.svg
+
+          if git -C "$publish_worktree" diff --cached --quiet; then
+            echo "No star history changes to commit."
+            exit 0
+          fi
+
+          git -C "$publish_worktree" config \
+            user.name "github-actions[bot]"
+          git -C "$publish_worktree" config \
+            user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$publish_worktree" commit -m "chore: update star history"
+          git -C "$publish_worktree" push origin HEAD:refs/heads/star-history

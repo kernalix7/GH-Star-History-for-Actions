@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export function utcDate(value = new Date()) {
   const date = value instanceof Date ? value : new Date(value);
@@ -22,6 +22,41 @@ export function createBackfill(stargazerDates) {
     });
 }
 
+export function validateHistory(history) {
+  if (history === null) return;
+  if (!history || typeof history !== "object" || Array.isArray(history)) {
+    throw new Error("Existing history.json must contain a JSON object.");
+  }
+
+  const schemaVersion = Number(history.schemaVersion);
+  if (!Number.isInteger(schemaVersion) || schemaVersion < 1) {
+    throw new Error("Existing history.json has an invalid schemaVersion.");
+  }
+  if (schemaVersion > SCHEMA_VERSION) {
+    throw new Error(
+      `Existing history.json uses schema version ${schemaVersion}, but this Action supports up to ${SCHEMA_VERSION}.`,
+    );
+  }
+  if (typeof history.repository !== "string" || !history.repository.includes("/")) {
+    throw new Error("Existing history.json has an invalid repository value.");
+  }
+  if (!Array.isArray(history.points)) {
+    throw new Error("Existing history.json must contain a points array.");
+  }
+  if (schemaVersion >= 2 && !/^\d+$/.test(String(history.repositoryId || ""))) {
+    throw new Error("Existing history.json has an invalid repositoryId.");
+  }
+}
+
+export function validateRepositoryIdentity(history, repositoryId) {
+  if (!history?.repositoryId) return;
+  if (String(history.repositoryId) !== String(repositoryId)) {
+    throw new Error(
+      "Existing history.json belongs to a different GitHub repository.",
+    );
+  }
+}
+
 function normalizePoints(points) {
   const byDate = new Map();
   for (const point of points || []) {
@@ -41,11 +76,16 @@ function normalizePoints(points) {
 export function updateHistory({
   existing,
   repository,
+  repositoryId,
   repositoryCreatedAt,
   currentCount,
   stargazerDates,
   now = new Date(),
 }) {
+  if (!/^\d+$/.test(String(repositoryId || ""))) {
+    throw new Error("repositoryId must be a numeric GitHub repository ID.");
+  }
+
   const today = utcDate(now);
   const shouldBackfill = !existing || Array.isArray(stargazerDates);
   const backfilled = shouldBackfill
@@ -64,6 +104,7 @@ export function updateHistory({
   return {
     schemaVersion: SCHEMA_VERSION,
     repository,
+    repositoryId: String(repositoryId),
     repositoryCreatedAt: repositoryCreatedAt
       ? utcDate(repositoryCreatedAt)
       : existing?.repositoryCreatedAt || null,

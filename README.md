@@ -9,25 +9,30 @@ render its own star history. It uses the repository's short-lived automatic
 ## Live example
 
 This chart is generated from this repository's own Star history and committed
-back by the Action itself:
+by the Action to its dedicated `star-history` branch:
 
 <picture>
   <source
     media="(prefers-color-scheme: dark)"
-    srcset="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/main/.github/star-history/chart-dark.svg"
+    srcset="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/star-history/chart-dark.svg"
   >
   <img
     alt="GH Star History for Actions live star history"
-    src="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/main/.github/star-history/chart.svg"
+    src="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/star-history/chart.svg"
     width="900"
   >
 </picture>
 
-The action generates:
+The first run creates a separate `star-history` branch containing:
 
-- `.github/star-history/history.json`
-- `.github/star-history/chart.svg`
-- `.github/star-history/chart-dark.svg`
+- `.gh-star-history` (internal ownership marker)
+- `history.json`
+- `chart.svg`
+- `chart-dark.svg`
+
+Generated commits never touch the default branch.
+If a branch with that name already contains unrelated files, the workflow stops
+instead of overwriting it.
 
 ## How it works
 
@@ -61,11 +66,11 @@ simplest way to use it from both public and private repositories.
 <picture>
   <source
     media="(prefers-color-scheme: dark)"
-    srcset="https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/.github/star-history/chart-dark.svg"
+    srcset="https://raw.githubusercontent.com/OWNER/REPOSITORY/star-history/chart-dark.svg"
   >
   <img
     alt="GitHub star history"
-    src="https://raw.githubusercontent.com/OWNER/REPOSITORY/BRANCH/.github/star-history/chart.svg"
+    src="https://raw.githubusercontent.com/OWNER/REPOSITORY/star-history/chart.svg"
     width="900"
   >
 </picture>
@@ -77,6 +82,11 @@ repository content, but raw image embedding outside GitHub may not.
 See the complete [installation guide](docs/INSTALLATION.md) for publishing the
 action, installing it in multiple repositories, optional version pinning, and
 handling protected branches.
+
+The copied file contains only the schedule, write permission, and a call to the
+centrally maintained reusable workflow. With `@main`, every scheduled run uses
+the latest workflow and Action implementation from this repository. The schedule
+file itself must remain on each target repository's default branch.
 
 ## Why the workflow configures a Git email
 
@@ -97,7 +107,7 @@ actual push is authenticated by the caller repository's automatic token.
 | --- | --- | --- |
 | `github-token` | required | Pass `${{ github.token }}`. |
 | `repository` | caller repository | Repository in `owner/name` form. |
-| `output-directory` | `.github/star-history` | Generated file directory. |
+| `output-directory` | `.github/star-history` | Working directory used by the Action. |
 | `title` | `Star History` | Chart title. |
 | `width` | `900` | SVG width, clamped to 480–2400. |
 | `height` | `600` | SVG height, clamped to 320–1600. |
@@ -107,12 +117,14 @@ actual push is authenticated by the caller repository's automatic token.
 
 The example grants `contents: write` because GitHub currently uses repository
 write-level collaboration to authorize the restricted stargazers endpoint and
-because the workflow commits generated files. The token is created for the
-workflow run, scoped to the caller repository, and expires after the job.
+because the workflow commits generated files to the dedicated branch. The token
+is created for the workflow run, scoped to the caller repository, and expires
+after the job.
 
 For higher-assurance repositories:
 
-- optionally reference this action by a reviewed commit SHA instead of `main`;
+- optionally pin the reusable workflow call to a reviewed full commit SHA
+  instead of `main`;
 - do not run the write-enabled job on untrusted pull-request code;
 - keep the generated data aggregate-only;
 - review changes before enabling this across important repositories.

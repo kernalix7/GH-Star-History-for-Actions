@@ -1,7 +1,12 @@
-import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { appendFile, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { prepareOutputPaths } from "./filesystem.mjs";
 import { getAllCurrentStargazerDates, getRepository, GitHubApiError } from "./github.mjs";
-import { updateHistory } from "./history.mjs";
+import {
+  updateHistory,
+  validateHistory,
+  validateRepositoryIdentity,
+} from "./history.mjs";
 import { actionInput } from "./input.mjs";
 import { renderChart } from "./render.mjs";
 
@@ -49,18 +54,33 @@ async function run() {
   const forceBackfill = actionInput("force-backfill", "false").toLowerCase() === "true";
 
   if (!token) throw new Error("github-token is required. Pass ${{ github.token }} from the caller workflow.");
-  if (path.isAbsolute(outputDirectory) || outputDirectory.split(/[\\/]/).includes("..")) {
-    throw new Error("output-directory must be a safe path relative to the checked-out repository.");
-  }
-
   const root = process.env.GITHUB_WORKSPACE || process.cwd();
-  const targetDirectory = path.join(root, outputDirectory);
-  const historyPath = path.join(targetDirectory, "history.json");
-  const chartPath = path.join(targetDirectory, "chart.svg");
-  const chartDarkPath = path.join(targetDirectory, "chart-dark.svg");
-  await mkdir(targetDirectory, { recursive: true });
+  const {
+    historyPath,
+    chartPath,
+    chartDarkPath,
+  } = await prepareOutputPaths(root, outputDirectory);
 
   const existing = await readExisting(historyPath);
+  validateHistory(existing);
+
+  const repositoryMetadata = await getRepository(repository, token);
+  const repositoryId = String(repositoryMetadata.id || "");
+  if (!/^\d+$/.test(repositoryId)) {
+    throw new Error("GitHub returned an invalid repository ID.");
+  }
+  validateRepositoryIdentity(existing, repositoryId);
+  if (existing?.repository && existing.repository !== repository) {
+    if (!existing.repositoryId) {
+      const previousRepository = await getRepository(existing.repository, token);
+      validateRepositoryIdentity(
+        { repositoryId: String(previousRepository.id || "") },
+        repositoryId,
+      );
+    }
+    warning(`Repository name changed from ${existing.repository} to ${repository}; preserving its history.`);
+  }
+
   const needsBackfill = forceBackfill || !existing;
   let stargazerDates;
 
@@ -78,7 +98,6 @@ async function run() {
     }
   }
 
-  const repositoryMetadata = await getRepository(repository, token);
   const currentCount = Number(repositoryMetadata.stargazers_count || 0);
   if (stargazerDates && stargazerDates.length !== currentCount) {
     warning(`Fetched ${stargazerDates.length} active stargazers, while GitHub reports ${currentCount} total stars. The observed total is authoritative.`);
@@ -87,6 +106,7 @@ async function run() {
   const history = updateHistory({
     existing,
     repository,
+    repositoryId,
     repositoryCreatedAt: repositoryMetadata.created_at,
     currentCount,
     stargazerDates,
