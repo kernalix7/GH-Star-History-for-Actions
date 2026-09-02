@@ -6,6 +6,23 @@
 생성하도록 해주는 독립형 GitHub Action입니다. 저장소마다 자동으로 발급되는
 단기 `GITHUB_TOKEN`만 사용하므로 PAT와 외부 서버가 필요 없습니다.
 
+## 실제 작동 예시
+
+아래 그래프는 이 저장소의 실제 Star 이력을 Action이 직접 생성하고 다시
+커밋한 결과입니다.
+
+<picture>
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/main/.github/star-history/chart-dark.svg"
+  >
+  <img
+    alt="GH Star History for Actions 실제 Star 이력"
+    src="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/main/.github/star-history/chart.svg"
+    width="900"
+  >
+</picture>
+
 생성되는 파일은 다음과 같습니다.
 
 - `.github/star-history/history.json`

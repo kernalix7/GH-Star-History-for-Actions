@@ -6,6 +6,23 @@ A self-contained GitHub Action that lets every repository collect, store, and
 render its own star history. It uses the repository's short-lived automatic
 `GITHUB_TOKEN`; no personal access token or hosted service is required.
 
+## Live example
+
+This chart is generated from this repository's own Star history and committed
+back by the Action itself:
+
+<picture>
+  <source
+    media="(prefers-color-scheme: dark)"
+    srcset="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/main/.github/star-history/chart-dark.svg"
+  >
+  <img
+    alt="GH Star History for Actions live star history"
+    src="https://raw.githubusercontent.com/kernalix7/GH-Star-History-for-Actions/main/.github/star-history/chart.svg"
+    width="900"
+  >
+</picture>
+
 The action generates:
 
 - `.github/star-history/history.json`
