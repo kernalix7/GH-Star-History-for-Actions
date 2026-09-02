@@ -1,0 +1,50 @@
+name: GH Star History
+description: Backfill, observe, and render a repository's GitHub star history without a personal access token.
+author: Kim DaeHyun
+
+branding:
+  icon: star
+  color: yellow
+
+inputs:
+  github-token:
+    description: The caller repository's automatic github.token.
+    required: true
+  repository:
+    description: Repository to collect, in owner/name form. Defaults to the caller repository.
+    required: false
+    default: ""
+  output-directory:
+    description: Directory where history.json and SVG charts are written.
+    required: false
+    default: .github/star-history
+  title:
+    description: Optional chart title. Defaults to the repository name.
+    required: false
+    default: ""
+  width:
+    description: SVG width in pixels.
+    required: false
+    default: "900"
+  height:
+    description: SVG height in pixels.
+    required: false
+    default: "600"
+  force-backfill:
+    description: Rebuild the historical estimate from all current stargazers.
+    required: false
+    default: "false"
+
+outputs:
+  history-path:
+    description: Path to the generated JSON history.
+  chart-path:
+    description: Path to the generated light SVG chart.
+  chart-dark-path:
+    description: Path to the generated dark SVG chart.
+  star-count:
+    description: Current repository star count.
+
+runs:
+  using: node20
+  main: src/main.mjs
