@@ -9,12 +9,6 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: star-history
-  cancel-in-progress: false
-
 jobs:
   update:
     uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@main
-    permissions:
-      contents: write
