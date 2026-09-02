@@ -113,6 +113,17 @@ test("chartPoints starts at the repository creation date", () => {
   assert.deepEqual(points[0], { date: "2022-07-10", count: 0, source: "backfill" });
 });
 
+test("chartPoints keeps the creation-date anchor for a zero-star repository", () => {
+  const points = chartPoints({
+    repositoryCreatedAt: "2022-07-10",
+    points: [{ date: "2024-01-02", count: 0, source: "observed" }],
+  });
+  assert.deepEqual(points, [
+    { date: "2022-07-10", count: 0, source: "backfill" },
+    { date: "2024-01-02", count: 0, source: "observed" },
+  ]);
+});
+
 test("chartPoints does not invent a date for legacy histories", () => {
   const points = chartPoints({ points: [{ date: "2024-01-02", count: 2, source: "backfill" }] });
   assert.deepEqual(points[0], { date: "2024-01-02", count: 2, source: "backfill" });

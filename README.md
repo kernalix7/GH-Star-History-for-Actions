@@ -112,6 +112,17 @@ centrally maintained reusable workflow. With `@main`, every scheduled run uses
 the latest workflow and Action implementation from this repository. The schedule
 file itself must remain on each target repository's default branch.
 
+Replace `@main` in that file with a reviewed full commit SHA to pin the
+installation. A pinned repository keeps using that exact reusable workflow and
+Action implementation even when this project changes; it receives updates only
+after you manually replace the SHA.
+
+Manual runs provide dropdowns for chart size and legend position, plus a
+checkbox for rebuilding the backfill. The optional title remains a text field.
+These controls change the presentation or collection behavior of that run; all
+eight Date/Timeline, linear/log, and light/dark chart variants are still always
+generated.
+
 ## Why the workflow configures a Git email
 
 Git requires an author name and email before creating a commit. These values do

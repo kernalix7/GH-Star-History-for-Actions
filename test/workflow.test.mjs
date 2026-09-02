@@ -38,3 +38,22 @@ test("managed branch format 1 is accepted and new branches publish format 2", as
   assert.match(workflow, /expected_marker_v2=.*format: 2/);
   assert.match(workflow, /"format: 2"/);
 });
+
+test("manual runs expose safe presentation choices without reducing chart output", async () => {
+  const [workflow, example] = await Promise.all([
+    readFile(".github/workflows/reusable-star-history.yml", "utf8"),
+    readFile("examples/star-history.yml", "utf8"),
+  ]);
+
+  for (const contents of [workflow, example]) {
+    assert.match(contents, /size:[\s\S]+type: choice[\s\S]+900x600/);
+    assert.match(contents, /legend-position:[\s\S]+type: choice/);
+    assert.match(contents, /force-backfill:[\s\S]+type: boolean/);
+  }
+
+  assert.match(example, /size: \$\{\{ inputs\.size \|\| '900x600' \}\}/);
+  assert.match(example, /force-backfill: \$\{\{ inputs\.force-backfill \|\| false \}\}/);
+  for (const name of variantFiles) {
+    assert.match(workflow, new RegExp(name.replaceAll(".", "\\.")));
+  }
+});

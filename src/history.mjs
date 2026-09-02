@@ -128,7 +128,7 @@ export function chartPoints(history) {
   }
 
   const first = points[0];
-  if (first.count === 0 || !createdAt || createdAt >= first.date) return points;
+  if (!createdAt || createdAt >= first.date) return points;
 
   return [{ date: createdAt, count: 0, source: "backfill" }, ...points];
 }

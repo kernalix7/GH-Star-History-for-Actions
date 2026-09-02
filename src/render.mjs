@@ -162,14 +162,26 @@ export function renderChart(history, options = {}) {
       };
     });
   } else {
-    const domain = minTime === maxTime
-      ? [minTime - (30 * DAY), maxTime + (30 * DAY)]
+    const singleDate = minTime === maxTime;
+    const domain = singleDate
+      ? [minTime, maxTime + DAY]
       : [minTime, maxTime];
     xScale = d3.scaleTime().domain(domain).range([0, plotWidth]);
     const xTickFormat = xScale.tickFormat(5);
-    xTicks = xScale.ticks(5).map((value) => ({
+    const tickValues = singleDate ? [new Date(minTime)] : xScale.ticks(5);
+    if (!tickValues.some((value) => Number(value) === minTime)) {
+      const creationDate = new Date(minTime);
+      if (tickValues.length > 0 && Number(xScale(tickValues[0])) < 90) {
+        tickValues[0] = creationDate;
+      } else {
+        tickValues.unshift(creationDate);
+      }
+    }
+    xTicks = tickValues.map((value) => ({
       position: Number(xScale(value)) || 0,
-      label: xTickFormat(value),
+      label: Number(value) === minTime
+        ? d3.utcFormat("%b %d")(value)
+        : xTickFormat(value),
     }));
   }
 
@@ -178,13 +190,14 @@ export function renderChart(history, options = {}) {
     : d3.scaleLinear().domain([0, yDomainMax]).range([plotHeight, 0]);
 
   let yUnit;
-  const yValues = scale === "log" ? logarithmicTicks(maxCount) : yScale.ticks(5);
+  const yValues = scale === "log"
+    ? logarithmicTicks(maxCount)
+    : yDomainMax <= 5
+      ? Array.from({ length: Math.ceil(yDomainMax) + 1 }, (_, index) => index)
+      : yScale.ticks(5);
   const yTicks = yValues.map((value) => {
-    let label = "";
-    if (value !== 0 || scale === "log") {
-      if (value !== 0 && !yUnit) yUnit = numberFormatUnit(value);
-      label = value === 0 ? "0" : formatNumber(value, yUnit);
-    }
+    if (value !== 0 && !yUnit) yUnit = numberFormatUnit(value);
+    const label = value === 0 ? "0" : formatNumber(value, yUnit);
     return {
       position: Number(yScale(value)) || 0,
       label,
@@ -197,11 +210,8 @@ export function renderChart(history, options = {}) {
     .y((point) => Number(yScale(point.count)) || 0)
     .curve(d3.curveMonotoneX)(data);
 
-  const legendWidth = Math.max(
-    repository.length * 7.5 + 29,
-    repository.length * 7 + 28,
-  );
-  const legendHeight = 32;
+  const legendWidth = Math.max(72, repository.length * 7 + 24);
+  const legendHeight = 34;
   const legendX = legendPosition === "bottom-right"
     ? plotWidth - legendWidth - 8
     : 8;
@@ -258,8 +268,8 @@ export function renderChart(history, options = {}) {
     ${data.length === 1 ? `<circle class="single-point" cx="${Number(xScale(data[0].x)) || 0}" cy="${Number(yScale(data[0].count)) || 0}" r="4" fill="${theme.line}" filter="url(#xkcdify)"/>` : ""}
     <g class="legend" data-position="${legendPosition}">
       <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="5" ry="5" fill="${theme.background}" fill-opacity="0.85" stroke="${theme.foreground}" stroke-width="2" filter="url(#xkcdify)"/>
-      <rect x="${legendX + 7}" y="${legendY + 12}" width="8" height="8" rx="2" ry="2" fill="${theme.line}" filter="url(#xkcdify)"/>
-      <text x="${legendX + 21}" y="${legendY + 20}" fill="${theme.foreground}" font-size="15px">${escapeXml(repository)}</text>
+      <rect x="${legendX + 7}" y="${legendY + 12}" width="9" height="9" rx="2" ry="2" fill="${theme.line}" filter="url(#xkcdify)"/>
+      <text x="${legendX + 21}" y="${legendY + 22}" fill="${theme.foreground}" font-size="17px" font-weight="600">${escapeXml(repository)}</text>
     </g>
   </g>
 </svg>`;

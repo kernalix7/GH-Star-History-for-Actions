@@ -21,6 +21,12 @@ immediately, select:
 Actions → Update star history → Run workflow
 ```
 
+The manual run form included in the copied workflow provides a chart-size
+dropdown, a legend-position dropdown, an optional title field, and a force
+backfill checkbox. Every run still generates all eight chart variants. The
+choices only change their shared presentation settings or request a fresh
+historical backfill.
+
 The branch contains only:
 
 ```text
@@ -83,19 +89,11 @@ An embedded README image cannot run a reliable interactive mode switch. All
 variants are generated together so changing the README URL never requires a new
 collection run.
 
-To move the legend in all generated charts, add an optional reusable-workflow
-input to the copied file:
-
-```yaml
-jobs:
-  update:
-    uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@main
-    with:
-      legend-position: bottom-right
-```
-
-The same `with` block may set `title`, `width`, and `height`. Omitting it keeps
-the zero-configuration defaults.
+The copied workflow already passes the manual controls to the reusable
+workflow. Scheduled runs use the fallback values in its `with` block. Edit
+those fallbacks if a non-default size, title, or legend position should also be
+used by every scheduled run. Direct reusable-workflow callers may still pass
+custom `width` and `height` values instead of a size preset.
 
 Raw private-repository files require authentication, so embedding them outside
 authenticated GitHub pages may not work.
@@ -171,6 +169,10 @@ branch are resolved in the caller repository automatically.
 Actions → Update star history → Run workflow
 ```
 
+복사한 workflow의 수동 실행 화면에는 그래프 크기와 범례 위치 드롭다운, 선택적
+제목 입력칸, 과거 기록 강제 재수집 체크박스가 표시됩니다. 이 선택값은 공통 표시
+설정이나 재수집 동작만 바꾸며, 매번 기본 SVG 그래프 8개를 모두 생성합니다.
+
 전용 브랜치에는 다음 파일만 들어갑니다.
 
 ```text
@@ -233,19 +235,11 @@ README에 삽입된 이미지는 대화형 보기 전환을 안정적으로 실�
 모든 조합이 함께 생성되므로 수집 workflow를 다시 실행하지 않고 README 주소만
 바꿔 선택할 수 있습니다.
 
-모든 그래프의 범례를 오른쪽 아래로 옮기려면 복사한 파일에 선택 입력을
-추가합니다.
-
-```yaml
-jobs:
-  update:
-    uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@main
-    with:
-      legend-position: bottom-right
-```
-
-같은 `with` 블록에서 `title`, `width`, `height`도 지정할 수 있습니다. 블록을
-생략하면 기존의 무설정 기본값을 사용합니다.
+복사한 workflow에는 수동 실행 선택값을 재사용 workflow로 전달하는 설정이 이미
+들어 있습니다. 예약 실행은 `with` 블록의 대체 기본값을 사용합니다. 예약 실행도
+항상 다른 크기·제목·범례 위치를 사용하게 하려면 해당 대체값을 수정하면 됩니다.
+재사용 workflow를 직접 호출하는 경우에는 크기 프리셋 대신 `width`와 `height`를
+직접 전달할 수도 있습니다.
 
 ### 자동으로 갱신되는 범위
 

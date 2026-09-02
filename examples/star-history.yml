@@ -5,10 +5,44 @@ on:
     # Pick a non-round minute to avoid the busiest part of the hour.
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      title:
+        description: Optional chart title
+        required: false
+        type: string
+      size:
+        description: Chart size
+        required: false
+        default: 900x600
+        type: choice
+        options:
+          - 600x400
+          - 900x600
+          - 1200x800
+          - 1500x1000
+      legend-position:
+        description: Legend position
+        required: false
+        default: top-left
+        type: choice
+        options:
+          - top-left
+          - bottom-right
+      force-backfill:
+        description: Refetch the complete active-stargazer history
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
 
 jobs:
   update:
+    # Replace main with a full commit SHA to stay on that exact version.
     uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@main
+    with:
+      title: ${{ inputs.title || '' }}
+      size: ${{ inputs.size || '900x600' }}
+      legend-position: ${{ inputs.legend-position || 'top-left' }}
+      force-backfill: ${{ inputs.force-backfill || false }}

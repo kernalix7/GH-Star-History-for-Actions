@@ -10,16 +10,16 @@ on:
         description: Optional chart title.
         required: false
         type: string
-      width:
-        description: SVG width in pixels.
+      size:
+        description: Size applied to all generated charts.
         required: false
-        default: 900
-        type: number
-      height:
-        description: SVG height in pixels.
-        required: false
-        default: 600
-        type: number
+        default: 900x600
+        type: choice
+        options:
+          - 600x400
+          - 900x600
+          - 1200x800
+          - 1500x1000
       legend-position:
         description: Position of the legend in every generated chart.
         required: false
@@ -28,6 +28,11 @@ on:
         options:
           - top-left
           - bottom-right
+      force-backfill:
+        description: Refetch all active stargazer timestamps.
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       title:
@@ -35,13 +40,18 @@ on:
         required: false
         default: ""
         type: string
+      size:
+        description: Optional chart size preset (600x400, 900x600, 1200x800, or 1500x1000).
+        required: false
+        default: ""
+        type: string
       width:
-        description: SVG width in pixels.
+        description: SVG width used when size is empty.
         required: false
         default: 900
         type: number
       height:
-        description: SVG height in pixels.
+        description: SVG height used when size is empty.
         required: false
         default: 600
         type: number
@@ -50,6 +60,11 @@ on:
         required: false
         default: top-left
         type: string
+      force-backfill:
+        description: Refetch all active stargazer timestamps.
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -175,14 +190,53 @@ jobs:
           path: .star-history-action
           persist-credentials: false
 
+      - name: Resolve chart size
+        id: chart-size
+        shell: bash
+        env:
+          SIZE: ${{ inputs.size }}
+          CUSTOM_WIDTH: ${{ inputs.width }}
+          CUSTOM_HEIGHT: ${{ inputs.height }}
+        run: |
+          case "${SIZE}" in
+            "")
+              width="${CUSTOM_WIDTH:-900}"
+              height="${CUSTOM_HEIGHT:-600}"
+              ;;
+            600x400)
+              width=600
+              height=400
+              ;;
+            900x600)
+              width=900
+              height=600
+              ;;
+            1200x800)
+              width=1200
+              height=800
+              ;;
+            1500x1000)
+              width=1500
+              height=1000
+              ;;
+            *)
+              echo "::error::Unsupported chart size preset: ${SIZE}"
+              exit 1
+              ;;
+          esac
+
+          echo "width=${width}" >> "${GITHUB_OUTPUT}"
+          echo "height=${height}" >> "${GITHUB_OUTPUT}"
+
       - name: Generate star history
         uses: ./.star-history-action
         with:
           github-token: ${{ github.token }}
           title: ${{ inputs.title }}
-          width: ${{ inputs.width }}
-          height: ${{ inputs.height }}
+          width: ${{ steps.chart-size.outputs.width }}
+          height: ${{ steps.chart-size.outputs.height }}
           legend-position: ${{ inputs.legend-position }}
+          force-backfill: ${{ inputs.force-backfill }}
 
       - name: Publish generated history
         shell: bash
