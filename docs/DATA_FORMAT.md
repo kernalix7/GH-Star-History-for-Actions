@@ -60,4 +60,4 @@ which it did not run.
 Set `force-backfill: true` for one run to reconstruct the backfilled portion from
 the current active stargazer set again. Existing observed values are preserved.
 Because users may have unstarred since the original backfill, this can alter the
-estimated historical curve.
+estimated historical curve. Normally leave this option off.

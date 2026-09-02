@@ -23,9 +23,9 @@ Actions → Update star history → Run workflow
 
 The manual run form included in the copied workflow provides a chart-size
 dropdown, a legend-position dropdown, an optional title field, and a force
-backfill checkbox. Every run still generates all eight chart variants. The
-choices only change their shared presentation settings or request a fresh
-historical backfill.
+backfill checkbox that should normally remain off. Every run still generates
+all eight chart variants. The choices only change their shared presentation
+settings or request a fresh historical backfill.
 
 The branch contains only:
 
@@ -170,8 +170,9 @@ Actions → Update star history → Run workflow
 ```
 
 복사한 workflow의 수동 실행 화면에는 그래프 크기와 범례 위치 드롭다운, 선택적
-제목 입력칸, 과거 기록 강제 재수집 체크박스가 표시됩니다. 이 선택값은 공통 표시
-설정이나 재수집 동작만 바꾸며, 매번 기본 SVG 그래프 8개를 모두 생성합니다.
+제목 입력칸, 과거 기록 재계산 체크박스가 표시됩니다. 재계산 옵션은 일반적으로
+끄고 사용합니다. 이 선택값은 공통 표시 설정이나 재수집 동작만 바꾸며, 매번
+기본 SVG 그래프 8개를 모두 생성합니다.
 
 전용 브랜치에는 다음 파일만 들어갑니다.
 

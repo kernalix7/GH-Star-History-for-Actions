@@ -147,7 +147,7 @@ actual push is authenticated by the caller repository's automatic token.
 | `width` | `900` | SVG width, clamped to 480–2400. |
 | `height` | `600` | SVG height, clamped to 320–1600. |
 | `legend-position` | `top-left` | `top-left` or `bottom-right`, applied to every chart. |
-| `force-backfill` | `false` | Refetch all active stargazer timestamps. |
+| `force-backfill` | `false` | Rebuild past history from current stargazers; normally leave it off. |
 
 ## Permissions and security
 
@@ -177,6 +177,7 @@ More details are available in [SECURITY.md](SECURITY.md).
 ## Documentation
 
 - [Installation](docs/INSTALLATION.md)
+- [Release guide](docs/RELEASING.md)
 - [Data format and accuracy](docs/DATA_FORMAT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Security policy and permission model](SECURITY.md)

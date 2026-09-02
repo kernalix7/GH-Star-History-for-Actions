@@ -35,7 +35,7 @@ inputs:
     required: false
     default: top-left
   force-backfill:
-    description: Rebuild the historical estimate from all current stargazers.
+    description: Rebuild past history from current stargazers (usually leave off).
     required: false
     default: "false"
 

@@ -57,3 +57,27 @@ test("manual runs expose safe presentation choices without reducing chart output
     assert.match(workflow, new RegExp(name.replaceAll(".", "\\.")));
   }
 });
+
+test("release notes expose an immutable SHA while the install template follows main", async () => {
+  const [releaseWorkflow, example, releaseGuide] = await Promise.all([
+    readFile(".github/workflows/release.yml", "utf8"),
+    readFile("examples/star-history.yml", "utf8"),
+    readFile("docs/RELEASING.md", "utf8"),
+  ]);
+
+  assert.match(releaseWorkflow, /git rev-parse "\$\{RELEASE_TAG\}\^\{commit\}"/);
+  assert.match(releaseWorkflow, /\^\[0-9a-f\]\{40\}\$/);
+  assert.match(releaseWorkflow, /--verify-tag/);
+  assert.match(releaseWorkflow, /--generate-notes/);
+  assert.match(
+    releaseWorkflow,
+    /reusable-star-history\.yml@\$\{release_sha\}/,
+  );
+  assert.match(example, /reusable-star-history\.yml@main/);
+  assert.doesNotMatch(
+    example,
+    /reusable-star-history\.yml@[0-9a-f]{40}/,
+  );
+  assert.match(releaseGuide, /examples\/star-history\.yml/);
+  assert.match(releaseGuide, /intentionally[\s\S]+@main/);
+});

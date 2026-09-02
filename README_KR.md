@@ -140,7 +140,7 @@ git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 | `width` | `900` | SVG 너비이며 480–2400 범위로 제한됩니다. |
 | `height` | `600` | SVG 높이이며 320–1600 범위로 제한됩니다. |
 | `legend-position` | `top-left` | 모든 그래프에 적용할 `top-left` 또는 `bottom-right`입니다. |
-| `force-backfill` | `false` | 현재 stargazer 전체를 다시 수집합니다. |
+| `force-backfill` | `false` | 현재 Star를 유지 중인 사용자 기준으로 과거 기록을 다시 계산합니다. 보통은 끕니다. |
 
 ## 권한과 보안
 
@@ -164,6 +164,7 @@ API가 저장소의 쓰기 수준 협업 권한을 확인하며, 생성된 JSON�
 ## 문서
 
 - [설치 및 적용](docs/INSTALLATION.md)
+- [릴리즈 안내](docs/RELEASING.md#한국어-릴리즈-안내)
 - [데이터 형식과 정확도](docs/DATA_FORMAT.md)
 - [문제 해결](docs/TROUBLESHOOTING.md)
 - [보안 정책과 권한 구조](SECURITY.md)

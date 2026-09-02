@@ -29,7 +29,7 @@ on:
           - top-left
           - bottom-right
       force-backfill:
-        description: Refetch all active stargazer timestamps.
+        description: Rebuild past history from current stargazers (usually leave off).
         required: false
         default: false
         type: boolean
@@ -61,7 +61,7 @@ on:
         default: top-left
         type: string
       force-backfill:
-        description: Refetch all active stargazer timestamps.
+        description: Rebuild past history from current stargazers (usually leave off).
         required: false
         default: false
         type: boolean

@@ -29,7 +29,7 @@ on:
           - top-left
           - bottom-right
       force-backfill:
-        description: Refetch the complete active-stargazer history
+        description: Rebuild past history from current stargazers (usually leave off)
         required: false
         default: false
         type: boolean
