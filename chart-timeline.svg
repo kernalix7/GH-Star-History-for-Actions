@@ -38,19 +38,15 @@
     </g>
     <g class="yaxis" fill="none" font-size="10" text-anchor="end">
       <path class="domain" stroke="#000000" d="M-1,490.5H0.5V0.5H-1" filter="url(#xkcdify)"/>
-      <g class="tick" opacity="1" transform="translate(0,490.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em"></text></g>
-      <g class="tick" opacity="1" transform="translate(0,392.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0.2</text></g>
-      <g class="tick" opacity="1" transform="translate(0,294.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0.4</text></g>
-      <g class="tick" opacity="1" transform="translate(0,196.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0.6</text></g>
-      <g class="tick" opacity="1" transform="translate(0,98.49999999999997)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0.8</text></g>
+      <g class="tick" opacity="1" transform="translate(0,490.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0</text></g>
       <g class="tick" opacity="1" transform="translate(0,0.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">1</text></g>
     </g>
     <path class="xkcd-chart-xyline" d="M0,490Z" fill="none" stroke="#dd4528" filter="url(#xkcdify)"/>
     <circle class="single-point" cx="0" cy="490" r="4" fill="#dd4528" filter="url(#xkcdify)"/>
     <g class="legend" data-position="top-left">
-      <rect x="8" y="5" width="306.5" height="32" rx="5" ry="5" fill="#ffffff" fill-opacity="0.85" stroke="#000000" stroke-width="2" filter="url(#xkcdify)"/>
-      <rect x="15" y="17" width="8" height="8" rx="2" ry="2" fill="#dd4528" filter="url(#xkcdify)"/>
-      <text x="29" y="25" fill="#000000" font-size="15px">kernalix7/GH-Star-History-for-Actions</text>
+      <rect x="8" y="5" width="283" height="34" rx="5" ry="5" fill="#ffffff" fill-opacity="0.85" stroke="#000000" stroke-width="2" filter="url(#xkcdify)"/>
+      <rect x="15" y="17" width="9" height="9" rx="2" ry="2" fill="#dd4528" filter="url(#xkcdify)"/>
+      <text x="29" y="27" fill="#000000" font-size="17px" font-weight="600">kernalix7/GH-Star-History-for-Actions</text>
     </g>
   </g>
 </svg>
