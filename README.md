@@ -131,7 +131,7 @@ More details are available in [SECURITY.md](SECURITY.md).
 
 ## Development
 
-Node.js 20 or newer is required. There are no runtime dependencies.
+Node.js 24 or newer is required. There are no runtime dependencies.
 
 ```sh
 npm test

@@ -7,10 +7,10 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/main.mjs && node --check src/github.mjs && node --check src/history.mjs && node --check src/render.mjs"
+    "check": "node --check src/main.mjs && node --check src/github.mjs && node --check src/history.mjs && node --check src/input.mjs && node --check src/render.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "license": "MIT"
 }

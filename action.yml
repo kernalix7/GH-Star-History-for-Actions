@@ -46,5 +46,5 @@ outputs:
     description: Current repository star count.
 
 runs:
-  using: node20
+  using: node24
   main: src/main.mjs

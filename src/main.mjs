@@ -2,11 +2,8 @@ import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { getAllCurrentStargazerDates, getRepository, GitHubApiError } from "./github.mjs";
 import { updateHistory } from "./history.mjs";
+import { actionInput } from "./input.mjs";
 import { renderChart } from "./render.mjs";
-
-function input(name, fallback = "") {
-  return process.env[`INPUT_${name.toUpperCase().replaceAll("-", "_")}`] || fallback;
-}
 
 function log(message) {
   process.stdout.write(`${message}\n`);
@@ -43,13 +40,13 @@ function validateRepository(value) {
 }
 
 async function run() {
-  const token = input("github-token");
-  const repository = validateRepository(input("repository", process.env.GITHUB_REPOSITORY || ""));
-  const outputDirectory = input("output-directory", ".github/star-history");
-  const width = Number(input("width", "900"));
-  const height = Number(input("height", "600"));
-  const title = input("title", repository);
-  const forceBackfill = input("force-backfill", "false").toLowerCase() === "true";
+  const token = actionInput("github-token");
+  const repository = validateRepository(actionInput("repository", process.env.GITHUB_REPOSITORY || ""));
+  const outputDirectory = actionInput("output-directory", ".github/star-history");
+  const width = Number(actionInput("width", "900"));
+  const height = Number(actionInput("height", "600"));
+  const title = actionInput("title", repository);
+  const forceBackfill = actionInput("force-backfill", "false").toLowerCase() === "true";
 
   if (!token) throw new Error("github-token is required. Pass ${{ github.token }} from the caller workflow.");
   if (path.isAbsolute(outputDirectory) || outputDirectory.split(/[\\/]/).includes("..")) {
