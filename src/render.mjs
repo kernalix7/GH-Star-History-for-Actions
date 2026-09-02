@@ -1,23 +1,20 @@
+import { createRequire } from "node:module";
 import { chartPoints } from "./history.mjs";
+import { handFontUrl } from "./hand-font.mjs";
+
+const require = createRequire(import.meta.url);
+const d3 = require("./vendor/d3-6.7.0.min.cjs");
 
 const THEMES = {
   light: {
     background: "#ffffff",
-    foreground: "#24292f",
-    muted: "#57606a",
-    grid: "#d0d7de",
-    line: "#0969da",
-    fill: "#ddf4ff",
-    observed: "#1a7f37",
+    foreground: "#000000",
+    line: "#dd4528",
   },
   dark: {
     background: "#0d1117",
-    foreground: "#f0f6fc",
-    muted: "#8c959f",
-    grid: "#30363d",
-    line: "#58a6ff",
-    fill: "#0c2d4a",
-    observed: "#3fb950",
+    foreground: "#ffffff",
+    line: "#ff6b6b",
   },
 };
 
@@ -34,118 +31,119 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-function niceMaximum(value) {
-  if (value <= 5) return Math.max(5, value);
-  const power = 10 ** Math.floor(Math.log10(value));
-  const fraction = value / power;
-  const nice = fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10;
-  return nice * power;
+function numberFormatUnit(value) {
+  if (value >= 1_000_000) return 1_000_000;
+  if (value >= 300) return 1_000;
+  return 1;
 }
 
-function formatCount(value) {
-  if (value >= 1_000_000) return `${Number((value / 1_000_000).toFixed(1))}m`;
-  if (value >= 1_000) return `${Number((value / 1_000).toFixed(1))}k`;
-  return String(Math.round(value));
-}
-
-function formatDate(dateString, spanDays) {
-  const date = new Date(`${dateString}T00:00:00Z`);
-  if (spanDays > 90) return date.toLocaleDateString("en-US", { month: "short", year: "2-digit", timeZone: "UTC" });
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
-}
-
-function simplify(points, maxPoints = 500) {
-  if (points.length <= maxPoints) return points;
-  const result = [];
-  const step = (points.length - 1) / (maxPoints - 1);
-  for (let index = 0; index < maxPoints; index += 1) {
-    result.push(points[Math.round(index * step)]);
+function formatNumber(value, unit = 1) {
+  if (unit === 1) return `${value}`;
+  if (unit === 1_000_000) {
+    return value >= 1_000_000 && value % 1_000_000 === 0
+      ? `${value / 1_000_000}M`
+      : `${(value / 1_000_000).toFixed(1)}M`;
   }
-  return result;
+  return value >= 1_000 && value % 1_000 === 0
+    ? `${value / 1_000}K`
+    : `${(value / 1_000).toFixed(1)}K`;
 }
 
-function polylinePath(points) {
-  if (points.length === 0) return "";
-  return points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(" ");
+function yLabelOffset(maximum) {
+  if (maximum > 100_000) return 2;
+  if (maximum > 10_000) return 8;
+  if (maximum > 1_000) return 12;
+  if (maximum > 100) return 20;
+  return 24;
 }
 
 export function renderChart(history, options = {}) {
   const theme = THEMES[options.theme || "light"] || THEMES.light;
   const width = clamp(Number(options.width) || 900, 480, 2400);
   const height = clamp(Number(options.height) || 600, 320, 1600);
-  const title = options.title || history.repository || "GitHub Star History";
+  const title = options.title || "Star History";
+  const repository = history.repository || "GitHub repository";
   const rawPoints = chartPoints(history);
-  const timestamps = rawPoints.map((point) => new Date(`${point.date}T00:00:00Z`).getTime());
-  let minTime = Math.min(...timestamps);
-  let maxTime = Math.max(...timestamps);
-  if (minTime === maxTime) maxTime += 86_400_000;
+  const data = rawPoints.map((point) => ({
+    ...point,
+    time: new Date(`${point.date}T00:00:00Z`),
+  }));
 
-  const maxCount = Math.max(0, ...rawPoints.map((point) => point.count));
-  const yMaximum = niceMaximum(maxCount);
-  const margin = { top: 82, right: 38, bottom: 76, left: 82 };
+  const margin = { top: 60, right: 30, bottom: 50, left: 70 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
-  const spanDays = Math.max(1, (maxTime - minTime) / 86_400_000);
+  const minTime = Math.min(...data.map((point) => Number(point.time)));
+  const maxTime = Math.max(...data.map((point) => Number(point.time)));
+  const maxCount = Math.max(...data.map((point) => point.count));
 
-  const x = (timestamp) => margin.left + ((timestamp - minTime) / (maxTime - minTime)) * plotWidth;
-  const y = (count) => margin.top + plotHeight - (count / yMaximum) * plotHeight;
-  const plotted = simplify(rawPoints).map((point) => ({
-    ...point,
-    x: x(new Date(`${point.date}T00:00:00Z`).getTime()),
-    y: y(point.count),
+  const xScale = d3.scaleTime().domain([minTime, maxTime]).range([0, plotWidth]);
+  const yScale = d3.scaleLinear().domain([0, maxCount]).range([plotHeight, 0]);
+  const xTickFormat = xScale.tickFormat(5);
+  const xTicks = xScale.ticks(5).map((value) => ({
+    position: Number(xScale(value)) || 0,
+    label: xTickFormat(value),
   }));
-  const linePath = polylinePath(plotted);
-  const areaPath = `${linePath} L${plotted.at(-1).x.toFixed(2)},${(margin.top + plotHeight).toFixed(2)} L${plotted[0].x.toFixed(2)},${(margin.top + plotHeight).toFixed(2)} Z`;
 
-  const xTicks = [];
-  const yTicks = [];
-  for (let index = 0; index <= 4; index += 1) {
-    const ratio = index / 4;
-    const timestamp = minTime + (maxTime - minTime) * ratio;
-    xTicks.push({ x: margin.left + plotWidth * ratio, label: formatDate(new Date(timestamp).toISOString().slice(0, 10), spanDays) });
-    const value = yMaximum * ratio;
-    yTicks.push({ y: margin.top + plotHeight - plotHeight * ratio, label: formatCount(value) });
-  }
+  let yUnit;
+  const yTicks = yScale.ticks(5).map((value) => {
+    let label = "";
+    if (value !== 0) {
+      if (!yUnit) yUnit = numberFormatUnit(value);
+      label = formatNumber(value, yUnit);
+    }
+    return {
+      position: Number(yScale(value)) || 0,
+      label,
+    };
+  });
 
-  const observedIndex = plotted.findIndex((point) => point.source === "observed");
-  const observedPoint = observedIndex >= 0 ? plotted[observedIndex] : null;
+  const linePath = d3
+    .line()
+    .x((point) => Number(xScale(point.time)) || 0)
+    .y((point) => Number(yScale(point.count)) || 0)
+    .curve(d3.curveMonotoneX)(data);
+
+  const legendWidth = repository.length * 7.5 + 29;
   const current = rawPoints.at(-1)?.count || 0;
   const generated = history.updatedAt?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+  const labelOffset = yLabelOffset(maxCount);
+  const yLabelX = Math.floor(50 - height / 2);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="title desc">
-  <title id="title">${escapeXml(title)} star history</title>
-  <desc id="desc">${escapeXml(history.repository)} has ${current} stars as of ${generated}. Data before ${escapeXml(history.observedFrom || generated)} is reconstructed from currently active stargazers.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="title desc" style="stroke-width:3; font-family:'GH Star Hand'; background:${theme.background}">
+  <title id="title">${escapeXml(title)} — ${escapeXml(repository)}</title>
+  <desc id="desc">${escapeXml(repository)} has ${current} stars as of ${generated}. Data before ${escapeXml(history.observedFrom || generated)} is reconstructed from currently active stargazers.</desc>
   <defs>
-    <filter id="sketch" x="-4%" y="-4%" width="108%" height="108%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.35" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-    <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${theme.fill}" stop-opacity="0.75"/>
-      <stop offset="1" stop-color="${theme.fill}" stop-opacity="0.08"/>
-    </linearGradient>
     <style>
-      text { font-family: ui-rounded, "Comic Sans MS", "Segoe Print", "Bradley Hand", sans-serif; }
-      .axis { stroke: ${theme.foreground}; stroke-width: 2.4; stroke-linecap: round; }
-      .grid { stroke: ${theme.grid}; stroke-width: 1; stroke-dasharray: 4 8; opacity: .65; }
-      .tick { fill: ${theme.muted}; font-size: 15px; }
+      @font-face { font-family: "GH Star Hand"; src: url("${handFontUrl}") format("woff2"); }
+      text { font-family: "GH Star Hand", "Comic Sans MS", "Segoe Print", cursive; }
+      .axis-tick { font-family: "GH Star Hand", "Comic Sans MS", "Segoe Print", cursive; font-size: 16px; fill: ${theme.foreground}; }
     </style>
+    <filter id="xkcdify" filterUnits="userSpaceOnUse" x="-5" y="-5" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
   </defs>
-  <rect width="100%" height="100%" rx="14" fill="${theme.background}"/>
-  <text x="${margin.left}" y="39" fill="${theme.foreground}" font-size="25" font-weight="700">${escapeXml(title)}</text>
-  <text x="${width - margin.right}" y="39" fill="${theme.foreground}" font-size="22" text-anchor="end">★ ${current.toLocaleString("en-US")}</text>
-  <text x="${margin.left}" y="62" fill="${theme.muted}" font-size="13">observed since ${escapeXml(history.observedFrom || generated)}</text>
-  ${yTicks.map((tick) => `<line class="grid" x1="${margin.left}" y1="${tick.y}" x2="${width - margin.right}" y2="${tick.y}"/><text class="tick" x="${margin.left - 13}" y="${tick.y + 5}" text-anchor="end">${tick.label}</text>`).join("\n  ")}
-  ${xTicks.map((tick) => `<text class="tick" x="${tick.x}" y="${height - margin.bottom + 31}" text-anchor="middle">${tick.label}</text>`).join("\n  ")}
-  <g filter="url(#sketch)">
-    <line class="axis" x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}"/>
-    <line class="axis" x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}"/>
-    <path d="${areaPath}" fill="url(#area)" stroke="none"/>
-    <path d="${linePath}" fill="none" stroke="${theme.line}" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+  <rect width="100%" height="100%" fill="${theme.background}"/>
+  <text x="50%" y="30" fill="${theme.foreground}" font-size="20px" font-weight="bold" text-anchor="middle">${escapeXml(title)}</text>
+  <text x="50%" y="${height - 10}" fill="${theme.foreground}" font-size="17px" text-anchor="middle">Date</text>
+  <text x="${yLabelX}" y="${labelOffset}" dy=".75em" fill="${theme.foreground}" font-size="17px" text-anchor="end" transform="rotate(-90)">GitHub Stars</text>
+  <g transform="translate(${margin.left},${margin.top})" pointer-events="all">
+    <text transform="translate(${plotWidth - 50},${plotHeight + 40})" fill="#666666" font-size="16px" text-anchor="middle">GH Star History</text>
+    <g class="xaxis" transform="translate(0,${plotHeight})" fill="none" font-size="10" text-anchor="middle">
+      <path class="domain" stroke="${theme.foreground}" d="M0.5,0.5H${plotWidth + 0.5}" filter="url(#xkcdify)"/>
+      ${xTicks.map((tick) => `<g class="tick" opacity="1" transform="translate(${tick.position + 0.5},0)"><line stroke="${theme.foreground}" y2="0"/><text class="axis-tick" y="6" dy="0.71em">${escapeXml(tick.label)}</text></g>`).join("\n      ")}
+    </g>
+    <g class="yaxis" fill="none" font-size="10" text-anchor="end">
+      <path class="domain" stroke="${theme.foreground}" d="M-1,${plotHeight + 0.5}H0.5V0.5H-1" filter="url(#xkcdify)"/>
+      ${yTicks.map((tick) => `<g class="tick" opacity="1" transform="translate(0,${tick.position + 0.5})"><line stroke="${theme.foreground}" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">${tick.label}</text></g>`).join("\n      ")}
+    </g>
+    <path class="xkcd-chart-xyline" d="${linePath || ""}" fill="none" stroke="${theme.line}" filter="url(#xkcdify)"/>
+    <g class="legend">
+      <rect x="8" y="5" width="${legendWidth}" height="32" rx="5" ry="5" fill="${theme.background}" fill-opacity="0.85" stroke="${theme.foreground}" stroke-width="2" filter="url(#xkcdify)"/>
+      <rect x="15" y="17" width="8" height="8" rx="2" ry="2" fill="${theme.line}" filter="url(#xkcdify)"/>
+      <text x="29" y="25" fill="${theme.foreground}" font-size="15px">${escapeXml(repository)}</text>
+    </g>
   </g>
-  ${observedPoint ? `<line x1="${observedPoint.x}" y1="${margin.top}" x2="${observedPoint.x}" y2="${height - margin.bottom}" stroke="${theme.observed}" stroke-width="1.5" stroke-dasharray="5 7" opacity=".8"/><text x="${Math.min(observedPoint.x + 8, width - 155)}" y="${margin.top + 18}" fill="${theme.observed}" font-size="12">daily observations begin</text>` : ""}
-  <circle cx="${plotted.at(-1).x}" cy="${plotted.at(-1).y}" r="5" fill="${theme.background}" stroke="${theme.line}" stroke-width="3"/>
-  <text x="${width - margin.right}" y="${height - 21}" fill="${theme.muted}" font-size="12" text-anchor="end">generated by GH Star History for Actions · inspired by star-history.com (MIT)</text>
 </svg>`;
 }

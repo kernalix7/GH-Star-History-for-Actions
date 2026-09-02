@@ -98,7 +98,7 @@ actual push is authenticated by the caller repository's automatic token.
 | `github-token` | required | Pass `${{ github.token }}`. |
 | `repository` | caller repository | Repository in `owner/name` form. |
 | `output-directory` | `.github/star-history` | Generated file directory. |
-| `title` | repository name | Chart title. |
+| `title` | `Star History` | Chart title. |
 | `width` | `900` | SVG width, clamped to 480–2400. |
 | `height` | `600` | SVG height, clamped to 320–1600. |
 | `force-backfill` | `false` | Refetch all active stargazer timestamps. |
@@ -131,7 +131,8 @@ More details are available in [SECURITY.md](SECURITY.md).
 
 ## Development
 
-Node.js 24 or newer is required. There are no runtime dependencies.
+Node.js 24 or newer is required. No package installation is needed at runtime;
+the renderer's reviewed D3 build is pinned inside the action.
 
 ```sh
 npm test
@@ -140,6 +141,8 @@ npm run check
 
 ## License and attribution
 
-This project is MIT licensed. Its hand-drawn chart style is inspired by
+The project source is MIT licensed. Its chart renderer is adapted from
 [Star History](https://github.com/star-history/star-history), also MIT licensed.
-See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for attribution.
+The pinned D3 build is BSD-3-Clause licensed.
+The embedded Patrick Hand font subset is separately licensed under SIL OFL 1.1.
+See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for attribution and terms.

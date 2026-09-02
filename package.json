@@ -2,12 +2,12 @@
   "name": "gh-star-history-for-actions",
   "version": "0.1.0",
   "private": true,
-  "description": "A dependency-free GitHub Action that stores and renders a repository's star history.",
+  "description": "A self-contained GitHub Action that stores and renders a repository's star history.",
   "author": "Kim DaeHyun <kernalix7@kodenet.io>",
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/main.mjs && node --check src/github.mjs && node --check src/history.mjs && node --check src/input.mjs && node --check src/render.mjs"
+    "check": "node --check src/main.mjs && node --check src/github.mjs && node --check src/history.mjs && node --check src/input.mjs && node --check src/render.mjs && node --check src/hand-font.mjs && node --check src/vendor/d3-6.7.0.min.cjs"
   },
   "engines": {
     "node": ">=24"

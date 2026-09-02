@@ -19,7 +19,7 @@ inputs:
     required: false
     default: .github/star-history
   title:
-    description: Optional chart title. Defaults to the repository name.
+    description: Optional chart title. Defaults to Star History, matching the original chart layout.
     required: false
     default: ""
   width:

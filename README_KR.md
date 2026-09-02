@@ -95,7 +95,7 @@ git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 | `github-token` | 필수 | `${{ github.token }}`을 전달합니다. |
 | `repository` | 실행 저장소 | `owner/name` 형식의 저장소입니다. |
 | `output-directory` | `.github/star-history` | 생성 파일을 저장할 디렉터리입니다. |
-| `title` | 저장소 이름 | 그래프 제목입니다. |
+| `title` | `Star History` | 그래프 제목입니다. |
 | `width` | `900` | SVG 너비이며 480–2400 범위로 제한됩니다. |
 | `height` | `600` | SVG 높이이며 320–1600 범위로 제한됩니다. |
 | `force-backfill` | `false` | 현재 stargazer 전체를 다시 수집합니다. |
@@ -125,7 +125,8 @@ API가 저장소의 쓰기 수준 협업 권한을 확인하며, 생성된 JSON�
 
 ## 개발
 
-Node.js 24 이상이 필요하며 런타임 외부 패키지는 없습니다.
+Node.js 24 이상이 필요합니다. 실행 중 패키지 설치는 필요하지 않으며, 검토한
+D3 빌드를 Action 내부에 고정해 두었습니다.
 
 ```sh
 npm test
@@ -134,7 +135,8 @@ npm run check
 
 ## 라이선스와 출처
 
-이 프로젝트는 MIT 라이선스로 배포됩니다. 손그림 그래프 스타일은 MIT
-라이선스의 [Star History](https://github.com/star-history/star-history)에서
-영감을 받았습니다. 자세한 고지는
+프로젝트 소스는 MIT 라이선스로 배포됩니다. 그래프 렌더러는 MIT 라이선스의
+[Star History](https://github.com/star-history/star-history)를 바탕으로
+수정했습니다. 고정된 D3 빌드에는 BSD-3-Clause, 내장 Patrick Hand 폰트
+서브셋에는 SIL OFL 1.1이 각각 적용됩니다. 자세한 고지와 조건은
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)에 있습니다.

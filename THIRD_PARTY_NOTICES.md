@@ -1,6 +1,8 @@
 # Third-party notices
 
-The generated chart's hand-drawn visual language is inspired by the open-source
+## Star History
+
+The generated chart renderer is adapted from the open-source
 [Star History](https://github.com/star-history/star-history) project.
 
 Star History is distributed under the MIT License:
@@ -28,4 +30,24 @@ Star History is distributed under the MIT License:
 > SOFTWARE.
 
 This project does not use the Star History name, logo, hosted service, or
-embedded font as its own branding.
+noncommercial xkcd font as its own branding.
+
+## D3
+
+The renderer includes the pinned D3 6.7.0 distribution so its scales, ticks,
+and monotone curve match the D3 generation used by Star History.
+
+Copyright 2010-2020 Mike Bostock
+
+D3 is licensed under the BSD 3-Clause License. The full license text is
+included in [`licenses/D3-BSD-3-Clause.txt`](licenses/D3-BSD-3-Clause.txt).
+
+## Patrick Hand
+
+The generated SVG embeds an ASCII subset of Patrick Hand.
+
+Copyright (c) 2010-2012 Patrick Wagesreiter
+(mail@patrickwagesreiter.at)
+
+Patrick Hand is licensed under the SIL Open Font License, Version 1.1. The full
+license text is included in [`licenses/PatrickHand-OFL.txt`](licenses/PatrickHand-OFL.txt).
