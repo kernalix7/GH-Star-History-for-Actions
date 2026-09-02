@@ -19,6 +19,13 @@ organization policy may prevent direct pushes. Review the workflow permissions
 and branch rules. Prefer a dedicated data branch or pull-request workflow over
 weakening important protections.
 
+## The first run says `No star history changes to commit`
+
+Update to the latest workflow example. Older examples checked `git diff` before
+staging generated files, which did not detect untracked files on the first run.
+The current example runs `git add .github/star-history` before checking the
+staged diff.
+
 ## The scheduled workflow stopped
 
 GitHub may automatically disable scheduled workflows in public repositories
