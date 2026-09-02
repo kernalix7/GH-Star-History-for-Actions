@@ -5,6 +5,9 @@ import { handFontUrl } from "./hand-font.mjs";
 const require = createRequire(import.meta.url);
 const d3 = require("./vendor/d3-6.7.0.min.cjs");
 
+export const PROJECT_URL = "https://github.com/kernalix7/GH-Star-History-for-Actions";
+
+const DAY = 24 * 60 * 60 * 1000;
 const THEMES = {
   light: {
     background: "#ffffff",
@@ -31,6 +34,10 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
+function option(value, allowed, fallback) {
+  return allowed.includes(value) ? value : fallback;
+}
+
 function numberFormatUnit(value) {
   if (value >= 1_000_000) return 1_000_000;
   if (value >= 300) return 1_000;
@@ -49,6 +56,31 @@ function formatNumber(value, unit = 1) {
     : `${(value / 1_000).toFixed(1)}K`;
 }
 
+function timelineUnit(milliseconds) {
+  const days = milliseconds / DAY;
+  if (days / 365 > 1) return "year";
+  if (days / 30 > 1) return "month";
+  if (days / 7 > 1) return "week";
+  return "day";
+}
+
+function formatTimeline(milliseconds, unit) {
+  if (milliseconds === 0) return "";
+  const days = Math.floor(milliseconds / DAY);
+  const amount = unit === "year"
+    ? Math.round(days / 365)
+    : unit === "month"
+      ? Math.round(days / 30)
+      : unit === "week"
+        ? Math.floor(days / 7)
+        : days;
+  if (amount <= 0) return "";
+  if (amount === 1) {
+    return unit === "day" ? "a day" : `a ${unit}`;
+  }
+  return `${amount} ${unit}s`;
+}
+
 function yLabelOffset(maximum) {
   if (maximum > 100_000) return 2;
   if (maximum > 10_000) return 8;
@@ -57,14 +89,47 @@ function yLabelOffset(maximum) {
   return 24;
 }
 
+function logarithmicTicks(maximum) {
+  if (maximum <= 0) return [0];
+  if (maximum <= 5) return [0, Math.ceil(maximum)];
+  if (maximum < 10) return [0, 5, Math.ceil(maximum)];
+
+  const ticks = [0];
+  let power = maximum >= 10_000 ? 2 : 1;
+  while ((10 ** power) <= maximum && ticks.length < 6) {
+    ticks.push(10 ** power);
+    power += 1;
+  }
+  const last = ticks.at(-1);
+  if (ticks.length < 6 && maximum > last && maximum > last * 2) {
+    ticks.push(maximum);
+  }
+  return ticks;
+}
+
+function safeAvatar(value) {
+  return /^data:image\/(?:png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(value || "")
+    ? value
+    : "";
+}
+
 export function renderChart(history, options = {}) {
-  const theme = THEMES[options.theme || "light"] || THEMES.light;
+  const themeName = option(options.theme, ["light", "dark"], "light");
+  const mode = option(options.mode, ["date", "timeline"], "date");
+  const scale = option(options.scale, ["linear", "log"], "linear");
+  const legendPosition = option(
+    options.legendPosition,
+    ["top-left", "bottom-right"],
+    "top-left",
+  );
+  const theme = THEMES[themeName];
   const width = clamp(Number(options.width) || 900, 480, 2400);
   const height = clamp(Number(options.height) || 600, 320, 1600);
   const title = options.title || "Star History";
   const repository = history.repository || "GitHub repository";
+  const avatarDataUrl = safeAvatar(options.avatarDataUrl);
   const rawPoints = chartPoints(history);
-  const data = rawPoints.map((point) => ({
+  const datedPoints = rawPoints.map((point) => ({
     ...point,
     time: new Date(`${point.date}T00:00:00Z`),
   }));
@@ -72,24 +137,53 @@ export function renderChart(history, options = {}) {
   const margin = { top: 60, right: 30, bottom: 50, left: 70 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
-  const minTime = Math.min(...data.map((point) => Number(point.time)));
-  const maxTime = Math.max(...data.map((point) => Number(point.time)));
-  const maxCount = Math.max(...data.map((point) => point.count));
+  const minTime = Math.min(...datedPoints.map((point) => Number(point.time)));
+  const maxTime = Math.max(...datedPoints.map((point) => Number(point.time)));
+  const maxCount = Math.max(...datedPoints.map((point) => point.count));
+  const yDomainMax = Math.max(1, maxCount);
 
-  const xScale = d3.scaleTime().domain([minTime, maxTime]).range([0, plotWidth]);
-  const yScale = d3.scaleLinear().domain([0, maxCount]).range([plotHeight, 0]);
-  const xTickFormat = xScale.tickFormat(5);
-  const xTicks = xScale.ticks(5).map((value) => ({
-    position: Number(xScale(value)) || 0,
-    label: xTickFormat(value),
+  const data = datedPoints.map((point) => ({
+    ...point,
+    x: mode === "timeline" ? Number(point.time) - minTime : point.time,
   }));
 
+  let xScale;
+  let xTicks;
+  if (mode === "timeline") {
+    const maxElapsed = Math.max(DAY, maxTime - minTime);
+    xScale = d3.scaleLinear().domain([0, maxElapsed]).range([0, plotWidth]);
+    let unit;
+    const ticks = xScale.ticks(5);
+    xTicks = ticks.map((value) => {
+      if (!unit && value !== 0) unit = timelineUnit(value);
+      return {
+        position: Number(xScale(value)) || 0,
+        label: formatTimeline(value, unit || "day"),
+      };
+    });
+  } else {
+    const domain = minTime === maxTime
+      ? [minTime - (30 * DAY), maxTime + (30 * DAY)]
+      : [minTime, maxTime];
+    xScale = d3.scaleTime().domain(domain).range([0, plotWidth]);
+    const xTickFormat = xScale.tickFormat(5);
+    xTicks = xScale.ticks(5).map((value) => ({
+      position: Number(xScale(value)) || 0,
+      label: xTickFormat(value),
+    }));
+  }
+
+  const yScale = scale === "log"
+    ? d3.scaleSymlog().domain([0, yDomainMax]).range([plotHeight, 0]).constant(10)
+    : d3.scaleLinear().domain([0, yDomainMax]).range([plotHeight, 0]);
+
   let yUnit;
-  const yTicks = yScale.ticks(5).map((value) => {
+  const yValues = scale === "log" ? logarithmicTicks(maxCount) : yScale.ticks(5);
+  const yTicks = yValues.map((value) => {
     let label = "";
-    if (value !== 0) {
-      if (!yUnit) yUnit = numberFormatUnit(value);
-      label = formatNumber(value, yUnit);
+    if (value !== 0 || scale === "log") {
+      if (value !== 0 && !yUnit) yUnit = numberFormatUnit(value);
+      label = value === 0 ? "0" : formatNumber(value, yUnit);
     }
     return {
       position: Number(yScale(value)) || 0,
@@ -99,20 +193,38 @@ export function renderChart(history, options = {}) {
 
   const linePath = d3
     .line()
-    .x((point) => Number(xScale(point.time)) || 0)
+    .x((point) => Number(xScale(point.x)) || 0)
     .y((point) => Number(yScale(point.count)) || 0)
     .curve(d3.curveMonotoneX)(data);
 
-  const legendWidth = repository.length * 7.5 + 29;
+  const legendWidth = Math.max(
+    repository.length * 7.5 + 29,
+    repository.length * 7 + 28,
+  );
+  const legendHeight = 32;
+  const legendX = legendPosition === "bottom-right"
+    ? plotWidth - legendWidth - 8
+    : 8;
+  const legendY = legendPosition === "bottom-right"
+    ? plotHeight - legendHeight - 15
+    : 5;
   const current = rawPoints.at(-1)?.count || 0;
   const generated = history.updatedAt?.slice(0, 10) || new Date().toISOString().slice(0, 10);
   const labelOffset = yLabelOffset(maxCount);
   const yLabelX = Math.floor(50 - height / 2);
+  const xLabel = mode === "timeline" ? "Timeline" : "Date";
+  const titleLogoX = width * 0.5 - 84;
+  const titleLogoCenterX = width * 0.5 - 73;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="title desc" style="stroke-width:3; font-family:'GH Star Hand'; background:${theme.background}">
-  <title id="title">${escapeXml(title)} — ${escapeXml(repository)}</title>
-  <desc id="desc">${escapeXml(repository)} has ${current} stars as of ${generated}. Data before ${escapeXml(history.observedFrom || generated)} is reconstructed from currently active stargazers.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="chart-title chart-desc" data-mode="${mode}" data-scale="${scale}" data-legend-position="${legendPosition}" style="stroke-width:3; font-family:'GH Star Hand'; background:${theme.background}">
+  <title id="chart-title">${escapeXml(title)} — ${escapeXml(repository)}</title>
+  <desc id="chart-desc">${escapeXml(repository)} has ${current} stars as of ${generated}. Data before ${escapeXml(history.observedFrom || generated)} is reconstructed from currently active stargazers.</desc>
+  <metadata id="project-metadata">
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <rdf:Description rdf:about=""><dc:creator>GH Star History for Actions</dc:creator><dc:source rdf:resource="${escapeXml(PROJECT_URL)}"/></rdf:Description>
+    </rdf:RDF>
+  </metadata>
   <defs>
     <style>
       @font-face { font-family: "GH Star Hand"; src: url("${handFontUrl}") format("woff2"); }
@@ -123,26 +235,31 @@ export function renderChart(history, options = {}) {
       <feTurbulence type="fractalNoise" baseFrequency="0.05" result="noise"/>
       <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G"/>
     </filter>
+    ${avatarDataUrl ? `<clipPath id="clip-circle-title"><circle r="11" cx="${titleLogoCenterX}" cy="23"/></clipPath>` : ""}
   </defs>
   <rect width="100%" height="100%" fill="${theme.background}"/>
   <text x="50%" y="30" fill="${theme.foreground}" font-size="20px" font-weight="bold" text-anchor="middle">${escapeXml(title)}</text>
-  <text x="50%" y="${height - 10}" fill="${theme.foreground}" font-size="17px" text-anchor="middle">Date</text>
+  ${avatarDataUrl ? `<image x="${titleLogoX}" y="12" width="22" height="22" href="${escapeXml(avatarDataUrl)}" clip-path="url(#clip-circle-title)" preserveAspectRatio="xMidYMid slice" aria-hidden="true"/>` : ""}
+  <text x="50%" y="${height - 10}" fill="${theme.foreground}" font-size="17px" text-anchor="middle">${xLabel}</text>
   <text x="${yLabelX}" y="${labelOffset}" dy=".75em" fill="${theme.foreground}" font-size="17px" text-anchor="end" transform="rotate(-90)">GitHub Stars</text>
   <g transform="translate(${margin.left},${margin.top})" pointer-events="all">
-    <text transform="translate(${plotWidth - 50},${plotHeight + 40})" fill="#666666" font-size="16px" text-anchor="middle">GH Star History</text>
+    <a href="${escapeXml(PROJECT_URL)}" target="_blank" rel="noopener noreferrer" aria-label="GH Star History for Actions project repository">
+      <text x="${plotWidth}" y="${plotHeight + 40}" fill="#666666" font-size="14px" text-anchor="end">Generated by GH Star History for Actions</text>
+    </a>
     <g class="xaxis" transform="translate(0,${plotHeight})" fill="none" font-size="10" text-anchor="middle">
       <path class="domain" stroke="${theme.foreground}" d="M0.5,0.5H${plotWidth + 0.5}" filter="url(#xkcdify)"/>
       ${xTicks.map((tick) => `<g class="tick" opacity="1" transform="translate(${tick.position + 0.5},0)"><line stroke="${theme.foreground}" y2="0"/><text class="axis-tick" y="6" dy="0.71em">${escapeXml(tick.label)}</text></g>`).join("\n      ")}
     </g>
     <g class="yaxis" fill="none" font-size="10" text-anchor="end">
       <path class="domain" stroke="${theme.foreground}" d="M-1,${plotHeight + 0.5}H0.5V0.5H-1" filter="url(#xkcdify)"/>
-      ${yTicks.map((tick) => `<g class="tick" opacity="1" transform="translate(0,${tick.position + 0.5})"><line stroke="${theme.foreground}" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">${tick.label}</text></g>`).join("\n      ")}
+      ${yTicks.map((tick) => `<g class="tick" opacity="1" transform="translate(0,${tick.position + 0.5})"><line stroke="${theme.foreground}" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">${escapeXml(tick.label)}</text></g>`).join("\n      ")}
     </g>
     <path class="xkcd-chart-xyline" d="${linePath || ""}" fill="none" stroke="${theme.line}" filter="url(#xkcdify)"/>
-    <g class="legend">
-      <rect x="8" y="5" width="${legendWidth}" height="32" rx="5" ry="5" fill="${theme.background}" fill-opacity="0.85" stroke="${theme.foreground}" stroke-width="2" filter="url(#xkcdify)"/>
-      <rect x="15" y="17" width="8" height="8" rx="2" ry="2" fill="${theme.line}" filter="url(#xkcdify)"/>
-      <text x="29" y="25" fill="${theme.foreground}" font-size="15px">${escapeXml(repository)}</text>
+    ${data.length === 1 ? `<circle class="single-point" cx="${Number(xScale(data[0].x)) || 0}" cy="${Number(yScale(data[0].count)) || 0}" r="4" fill="${theme.line}" filter="url(#xkcdify)"/>` : ""}
+    <g class="legend" data-position="${legendPosition}">
+      <rect x="${legendX}" y="${legendY}" width="${legendWidth}" height="${legendHeight}" rx="5" ry="5" fill="${theme.background}" fill-opacity="0.85" stroke="${theme.foreground}" stroke-width="2" filter="url(#xkcdify)"/>
+      <rect x="${legendX + 7}" y="${legendY + 12}" width="8" height="8" rx="2" ry="2" fill="${theme.line}" filter="url(#xkcdify)"/>
+      <text x="${legendX + 21}" y="${legendY + 20}" fill="${theme.foreground}" font-size="15px">${escapeXml(repository)}</text>
     </g>
   </g>
 </svg>`;

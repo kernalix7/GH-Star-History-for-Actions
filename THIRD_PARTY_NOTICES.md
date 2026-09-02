@@ -61,3 +61,11 @@ Patrick Hand is licensed under the SIL Open Font License, Version 1.1. The
 embedded WOFF2 subset retains the font's copyright, license notice, and license
 URL in its metadata. The full license text is included in
 [`licenses/PatrickHand-OFL.txt`](licenses/PatrickHand-OFL.txt).
+
+## Repository owner avatars
+
+Generated charts may embed the public avatar selected by the owner or
+organization of the repository being charted. Those images are user-provided
+content, are not part of this project's source distribution, and are not
+relicensed under this project's MIT License or the third-party software
+licenses above. This project claims no ownership of them.

@@ -3,7 +3,9 @@
 The generated `history.json` is stored at the root of the dedicated
 `star-history` branch. It contains aggregate repository-level data only.
 Stargazer usernames, user IDs, profile URLs, and email addresses are never
-written to disk.
+written to it. The generated SVG files separately embed the public repository
+owner or organization avatar returned by GitHub, but do not store its profile
+URL or any stargazer identity.
 
 ## Schema
 

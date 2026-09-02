@@ -33,12 +33,30 @@ The first run creates a separate `star-history` branch containing:
 
 - `.gh-star-history` (internal ownership marker)
 - `history.json`
-- `chart.svg`
-- `chart-dark.svg`
+- eight SVG charts covering Date/Timeline, linear/log scale, and light/dark
+  theme combinations
 
 Generated commits never touch the default branch.
 If a branch with that name already contains unrelated files, the workflow stops
 instead of overwriting it.
+
+## Chart variants
+
+GitHub README images are static, so controls inside an embedded SVG cannot
+reliably switch its axis mode or scale. The Action generates every useful
+combination and you select one by changing only the filename in the README URL.
+
+| View | Light | Dark |
+| --- | --- | --- |
+| Date, linear (default) | `chart.svg` | `chart-dark.svg` |
+| Date, logarithmic | `chart-log.svg` | `chart-log-dark.svg` |
+| Timeline, linear | `chart-timeline.svg` | `chart-timeline-dark.svg` |
+| Timeline, logarithmic | `chart-timeline-log.svg` | `chart-timeline-log-dark.svg` |
+
+Timeline measures elapsed time from the repository creation date. Logarithmic
+charts use a symmetric logarithmic scale so the real zero-star starting point
+remains visible. Every chart embeds the repository owner or organization avatar
+returned by GitHub. GitHub repositories do not have a separate repository icon.
 
 ## How it works
 
@@ -117,6 +135,7 @@ actual push is authenticated by the caller repository's automatic token.
 | `title` | `Star History` | Chart title. |
 | `width` | `900` | SVG width, clamped to 480–2400. |
 | `height` | `600` | SVG height, clamped to 320–1600. |
+| `legend-position` | `top-left` | `top-left` or `bottom-right`, applied to every chart. |
 | `force-backfill` | `false` | Refetch all active stargazer timestamps. |
 
 ## Permissions and security
@@ -126,6 +145,10 @@ write-level collaboration to authorize the restricted stargazers endpoint and
 because the workflow commits generated files to the dedicated branch. The token
 is created for the workflow run, scoped to the caller repository, and expires
 after the job.
+
+The public owner or organization avatar is downloaded only from GitHub's avatar
+host and embedded directly into each SVG. The repository token is not sent with
+that image request, and no external image URL remains in the generated chart.
 
 For higher-assurance repositories:
 

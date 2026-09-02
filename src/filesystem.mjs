@@ -1,7 +1,17 @@
 import { lstat, mkdir, realpath } from "node:fs/promises";
 import path from "node:path";
 
-const OUTPUT_FILES = ["history.json", "chart.svg", "chart-dark.svg"];
+const OUTPUT_FILES = [
+  "history.json",
+  "chart.svg",
+  "chart-dark.svg",
+  "chart-log.svg",
+  "chart-log-dark.svg",
+  "chart-timeline.svg",
+  "chart-timeline-dark.svg",
+  "chart-timeline-log.svg",
+  "chart-timeline-log-dark.svg",
+];
 
 function isInside(root, target) {
   const relative = path.relative(root, target);
@@ -57,13 +67,16 @@ export async function prepareOutputPaths(root, outputDirectory) {
     throw new Error("output-directory resolves outside the checked-out repository.");
   }
 
-  const [historyPath, chartPath, chartDarkPath] = OUTPUT_FILES
-    .map((name) => path.join(resolvedTarget, name));
-  await Promise.all([
-    requireRegularFileOrMissing(historyPath),
-    requireRegularFileOrMissing(chartPath),
-    requireRegularFileOrMissing(chartDarkPath),
-  ]);
+  const outputPaths = Object.fromEntries(
+    OUTPUT_FILES.map((name) => [name, path.join(resolvedTarget, name)]),
+  );
+  await Promise.all(Object.values(outputPaths).map(requireRegularFileOrMissing));
 
-  return { targetDirectory: resolvedTarget, historyPath, chartPath, chartDarkPath };
+  return {
+    targetDirectory: resolvedTarget,
+    outputPaths,
+    historyPath: outputPaths["history.json"],
+    chartPath: outputPaths["chart.svg"],
+    chartDarkPath: outputPaths["chart-dark.svg"],
+  };
 }

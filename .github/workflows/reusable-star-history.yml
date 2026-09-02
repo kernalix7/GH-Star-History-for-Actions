@@ -5,7 +5,51 @@ on:
     # Pick a non-round minute to avoid the busiest part of the hour.
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      title:
+        description: Optional chart title.
+        required: false
+        type: string
+      width:
+        description: SVG width in pixels.
+        required: false
+        default: 900
+        type: number
+      height:
+        description: SVG height in pixels.
+        required: false
+        default: 600
+        type: number
+      legend-position:
+        description: Position of the legend in every generated chart.
+        required: false
+        default: top-left
+        type: choice
+        options:
+          - top-left
+          - bottom-right
   workflow_call:
+    inputs:
+      title:
+        description: Optional chart title.
+        required: false
+        default: ""
+        type: string
+      width:
+        description: SVG width in pixels.
+        required: false
+        default: 900
+        type: number
+      height:
+        description: SVG height in pixels.
+        required: false
+        default: 600
+        type: number
+      legend-position:
+        description: Position of the legend in every generated chart.
+        required: false
+        default: top-left
+        type: string
 
 permissions:
   contents: write
@@ -32,7 +76,8 @@ jobs:
           history_branch="star-history"
           legacy_history=".github/star-history/history.json"
           marker_file=".gh-star-history"
-          expected_marker=$'GH-Star-History-for-Actions managed branch\nformat: 1'
+          expected_marker_v1=$'GH-Star-History-for-Actions managed branch\nformat: 1'
+          expected_marker_v2=$'GH-Star-History-for-Actions managed branch\nformat: 2'
 
           if test "$DEFAULT_BRANCH" = "$history_branch"; then
             echo "::error::The default branch cannot be named star-history."
@@ -50,7 +95,7 @@ jobs:
 
             unexpected_files="$(
               git ls-tree -r --name-only "origin/${history_branch}" |
-                grep -Ev '^(\.gh-star-history|history\.json|chart\.svg|chart-dark\.svg)$' || true
+                grep -Ev '^(\.gh-star-history|history\.json|chart\.svg|chart-dark\.svg|chart-log\.svg|chart-log-dark\.svg|chart-timeline\.svg|chart-timeline-dark\.svg|chart-timeline-log\.svg|chart-timeline-log-dark\.svg)$' || true
             )"
 
             if test -n "$unexpected_files"; then
@@ -74,7 +119,8 @@ jobs:
               "origin/${history_branch}:${marker_file}" 2>/dev/null; then
               actual_marker="$(git show \
                 "origin/${history_branch}:${marker_file}")"
-              if test "$actual_marker" != "$expected_marker"; then
+              if test "$actual_marker" != "$expected_marker_v1" &&
+                test "$actual_marker" != "$expected_marker_v2"; then
                 echo "::error::The star-history branch has an unknown management marker."
                 exit 1
               fi
@@ -133,17 +179,32 @@ jobs:
         uses: ./.star-history-action
         with:
           github-token: ${{ github.token }}
+          title: ${{ inputs.title }}
+          width: ${{ inputs.width }}
+          height: ${{ inputs.height }}
+          legend-position: ${{ inputs.legend-position }}
 
       - name: Publish generated history
         shell: bash
         run: |
           publish_files="${RUNNER_TEMP}/star-history-files"
           publish_worktree="${RUNNER_TEMP}/star-history-branch"
+          generated_files=(
+            history.json
+            chart.svg
+            chart-dark.svg
+            chart-log.svg
+            chart-log-dark.svg
+            chart-timeline.svg
+            chart-timeline-dark.svg
+            chart-timeline-log.svg
+            chart-timeline-log-dark.svg
+          )
           mkdir -p "$publish_files"
 
-          cp .github/star-history/history.json "$publish_files/history.json"
-          cp .github/star-history/chart.svg "$publish_files/chart.svg"
-          cp .github/star-history/chart-dark.svg "$publish_files/chart-dark.svg"
+          for file in "${generated_files[@]}"; do
+            cp ".github/star-history/${file}" "$publish_files/${file}"
+          done
 
           if git show-ref --verify --quiet \
             refs/remotes/origin/star-history; then
@@ -153,17 +214,17 @@ jobs:
             git -C "$publish_worktree" switch --orphan star-history
           fi
 
-          cp "$publish_files/history.json" "$publish_worktree/history.json"
-          cp "$publish_files/chart.svg" "$publish_worktree/chart.svg"
-          cp "$publish_files/chart-dark.svg" "$publish_worktree/chart-dark.svg"
+          for file in "${generated_files[@]}"; do
+            cp "$publish_files/${file}" "$publish_worktree/${file}"
+          done
 
           printf '%s\n' \
             "GH-Star-History-for-Actions managed branch" \
-            "format: 1" \
+            "format: 2" \
             > "$publish_worktree/.gh-star-history"
 
           git -C "$publish_worktree" add -- \
-            .gh-star-history history.json chart.svg chart-dark.svg
+            .gh-star-history "${generated_files[@]}"
 
           if git -C "$publish_worktree" diff --cached --quiet; then
             echo "No star history changes to commit."

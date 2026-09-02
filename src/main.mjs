@@ -1,7 +1,12 @@
 import { appendFile, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { prepareOutputPaths } from "./filesystem.mjs";
-import { getAllCurrentStargazerDates, getRepository, GitHubApiError } from "./github.mjs";
+import {
+  getAllCurrentStargazerDates,
+  getOwnerAvatarDataUrl,
+  getRepository,
+  GitHubApiError,
+} from "./github.mjs";
 import {
   updateHistory,
   validateHistory,
@@ -9,6 +14,17 @@ import {
 } from "./history.mjs";
 import { actionInput } from "./input.mjs";
 import { renderChart } from "./render.mjs";
+
+const CHART_VARIANTS = [
+  ["chart.svg", { theme: "light", mode: "date", scale: "linear" }],
+  ["chart-dark.svg", { theme: "dark", mode: "date", scale: "linear" }],
+  ["chart-log.svg", { theme: "light", mode: "date", scale: "log" }],
+  ["chart-log-dark.svg", { theme: "dark", mode: "date", scale: "log" }],
+  ["chart-timeline.svg", { theme: "light", mode: "timeline", scale: "linear" }],
+  ["chart-timeline-dark.svg", { theme: "dark", mode: "timeline", scale: "linear" }],
+  ["chart-timeline-log.svg", { theme: "light", mode: "timeline", scale: "log" }],
+  ["chart-timeline-log-dark.svg", { theme: "dark", mode: "timeline", scale: "log" }],
+];
 
 function log(message) {
   process.stdout.write(`${message}\n`);
@@ -44,6 +60,13 @@ function validateRepository(value) {
   return value;
 }
 
+function validateChoice(name, value, allowed) {
+  if (!allowed.includes(value)) {
+    throw new Error(`Invalid ${name} '${value}'. Expected one of: ${allowed.join(", ")}.`);
+  }
+  return value;
+}
+
 async function run() {
   const token = actionInput("github-token");
   const repository = validateRepository(actionInput("repository", process.env.GITHUB_REPOSITORY || ""));
@@ -51,6 +74,11 @@ async function run() {
   const width = Number(actionInput("width", "900"));
   const height = Number(actionInput("height", "600"));
   const title = actionInput("title", "Star History");
+  const legendPosition = validateChoice(
+    "legend-position",
+    actionInput("legend-position", "top-left"),
+    ["top-left", "bottom-right"],
+  );
   const forceBackfill = actionInput("force-backfill", "false").toLowerCase() === "true";
 
   if (!token) throw new Error("github-token is required. Pass ${{ github.token }} from the caller workflow.");
@@ -59,6 +87,7 @@ async function run() {
     historyPath,
     chartPath,
     chartDarkPath,
+    outputPaths,
   } = await prepareOutputPaths(root, outputDirectory);
 
   const existing = await readExisting(historyPath);
@@ -111,20 +140,41 @@ async function run() {
     currentCount,
     stargazerDates,
   });
+  let avatarDataUrl = "";
+  try {
+    avatarDataUrl = await getOwnerAvatarDataUrl(repositoryMetadata.owner?.avatar_url);
+  } catch (error) {
+    warning(`Could not embed the repository owner avatar: ${error.message}`);
+  }
+
   const json = `${JSON.stringify(history, null, 2)}\n`;
-  const light = renderChart(history, { title, width, height, theme: "light" });
-  const dark = renderChart(history, { title, width, height, theme: "dark" });
+  const charts = CHART_VARIANTS.map(([name, variant]) => [
+    outputPaths[name],
+    renderChart(history, {
+      title,
+      width,
+      height,
+      avatarDataUrl,
+      legendPosition,
+      ...variant,
+    }),
+  ]);
 
   await Promise.all([
     writeFile(historyPath, json, "utf8"),
-    writeFile(chartPath, light, "utf8"),
-    writeFile(chartDarkPath, dark, "utf8"),
+    ...charts.map(([file, svg]) => writeFile(file, svg, "utf8")),
   ]);
 
   await Promise.all([
     setOutput("history-path", path.relative(root, historyPath)),
     setOutput("chart-path", path.relative(root, chartPath)),
     setOutput("chart-dark-path", path.relative(root, chartDarkPath)),
+    setOutput("chart-log-path", path.relative(root, outputPaths["chart-log.svg"])),
+    setOutput("chart-log-dark-path", path.relative(root, outputPaths["chart-log-dark.svg"])),
+    setOutput("chart-timeline-path", path.relative(root, outputPaths["chart-timeline.svg"])),
+    setOutput("chart-timeline-dark-path", path.relative(root, outputPaths["chart-timeline-dark.svg"])),
+    setOutput("chart-timeline-log-path", path.relative(root, outputPaths["chart-timeline-log.svg"])),
+    setOutput("chart-timeline-log-dark-path", path.relative(root, outputPaths["chart-timeline-log-dark.svg"])),
     setOutput("star-count", String(currentCount)),
   ]);
 

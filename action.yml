@@ -30,6 +30,10 @@ inputs:
     description: SVG height in pixels.
     required: false
     default: "600"
+  legend-position:
+    description: Legend position shared by every generated chart. Either top-left or bottom-right.
+    required: false
+    default: top-left
   force-backfill:
     description: Rebuild the historical estimate from all current stargazers.
     required: false
@@ -42,6 +46,18 @@ outputs:
     description: Path to the generated light SVG chart.
   chart-dark-path:
     description: Path to the generated dark SVG chart.
+  chart-log-path:
+    description: Path to the generated light date/log SVG chart.
+  chart-log-dark-path:
+    description: Path to the generated dark date/log SVG chart.
+  chart-timeline-path:
+    description: Path to the generated light timeline/linear SVG chart.
+  chart-timeline-dark-path:
+    description: Path to the generated dark timeline/linear SVG chart.
+  chart-timeline-log-path:
+    description: Path to the generated light timeline/log SVG chart.
+  chart-timeline-log-dark-path:
+    description: Path to the generated dark timeline/log SVG chart.
   star-count:
     description: Current repository star count.
 

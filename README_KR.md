@@ -33,11 +33,28 @@
 
 - `.gh-star-history` (내부 소유권 표시 파일)
 - `history.json`
-- `chart.svg`
-- `chart-dark.svg`
+- Date/Timeline, 선형/로그 축, 밝은/어두운 테마 조합의 SVG 그래프 8개
 
 생성 커밋은 기본 브랜치를 건드리지 않습니다.
 같은 이름의 기존 브랜치에 다른 파일이 있으면 덮어쓰지 않고 안전하게 중단합니다.
+
+## 그래프 종류
+
+GitHub README에 넣은 이미지는 정적이므로 SVG 내부 버튼으로 축 종류를 안전하게
+전환할 수 없습니다. Action이 유용한 조합을 모두 만들며, README URL의 파일명만
+바꿔 원하는 그래프를 선택할 수 있습니다.
+
+| 보기 | 밝은 테마 | 어두운 테마 |
+| --- | --- | --- |
+| Date, 선형(기본값) | `chart.svg` | `chart-dark.svg` |
+| Date, 로그 | `chart-log.svg` | `chart-log-dark.svg` |
+| Timeline, 선형 | `chart-timeline.svg` | `chart-timeline-dark.svg` |
+| Timeline, 로그 | `chart-timeline-log.svg` | `chart-timeline-log-dark.svg` |
+
+Timeline은 저장소 생성일부터 흐른 시간을 표시합니다. 로그 그래프는 실제 0 Star
+시작점을 유지하는 대칭 로그 축을 사용합니다. 모든 그래프에는 GitHub가 반환한
+저장소 소유자 또는 조직 아바타를 내장합니다. GitHub 저장소 자체에는 별도의
+저장소 아이콘 항목이 없습니다.
 
 ## 작동 방식
 
@@ -113,6 +130,7 @@ git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 | `title` | `Star History` | 그래프 제목입니다. |
 | `width` | `900` | SVG 너비이며 480–2400 범위로 제한됩니다. |
 | `height` | `600` | SVG 높이이며 320–1600 범위로 제한됩니다. |
+| `legend-position` | `top-left` | 모든 그래프에 적용할 `top-left` 또는 `bottom-right`입니다. |
 | `force-backfill` | `false` | 현재 stargazer 전체를 다시 수집합니다. |
 
 ## 권한과 보안
@@ -122,6 +140,9 @@ API가 저장소의 쓰기 수준 협업 권한을 확인하며, 생성된 JSON�
 저장소의 전용 브랜치에 커밋해야 하기 때문입니다.
 
 토큰은 해당 workflow 실행과 해당 저장소에만 제한되고 작업 종료 후 만료됩니다.
+공개된 소유자 또는 조직 아바타는 GitHub 아바타 호스트에서만 내려받아 SVG에
+직접 내장합니다. 이 이미지 요청에는 저장소 토큰을 보내지 않으며 생성된
+그래프에도 외부 이미지 주소가 남지 않습니다.
 보안 수준을 더 높여야 하는 저장소에서는 재사용 workflow 호출을 검토한 전체
 커밋 SHA로 선택적으로 고정할 수 있습니다. 신뢰할 수 없는 PR 코드에서는 쓰기
 권한 workflow를 실행하지 마세요.

@@ -28,6 +28,12 @@ The branch contains only:
 history.json
 chart.svg
 chart-dark.svg
+chart-log.svg
+chart-log-dark.svg
+chart-timeline.svg
+chart-timeline-dark.svg
+chart-timeline-log.svg
+chart-timeline-log-dark.svg
 ```
 
 `.gh-star-history` is an internal ownership marker. If an existing branch with
@@ -63,6 +69,33 @@ Use raw GitHub URLs in a public README:
 ```
 
 Replace only `OWNER` and `REPOSITORY`.
+
+The example uses the default Date/linear charts. To select another static view,
+replace both filenames with one matching pair:
+
+| View | Light | Dark |
+| --- | --- | --- |
+| Date, logarithmic | `chart-log.svg` | `chart-log-dark.svg` |
+| Timeline, linear | `chart-timeline.svg` | `chart-timeline-dark.svg` |
+| Timeline, logarithmic | `chart-timeline-log.svg` | `chart-timeline-log-dark.svg` |
+
+An embedded README image cannot run a reliable interactive mode switch. All
+variants are generated together so changing the README URL never requires a new
+collection run.
+
+To move the legend in all generated charts, add an optional reusable-workflow
+input to the copied file:
+
+```yaml
+jobs:
+  update:
+    uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@main
+    with:
+      legend-position: bottom-right
+```
+
+The same `with` block may set `title`, `width`, and `height`. Omitting it keeps
+the zero-configuration defaults.
 
 Raw private-repository files require authentication, so embedding them outside
 authenticated GitHub pages may not work.
@@ -145,6 +178,12 @@ Actions → Update star history → Run workflow
 history.json
 chart.svg
 chart-dark.svg
+chart-log.svg
+chart-log-dark.svg
+chart-timeline.svg
+chart-timeline-dark.svg
+chart-timeline-log.svg
+chart-timeline-log-dark.svg
 ```
 
 `.gh-star-history`는 내부 소유권 표시 파일입니다. 같은 이름의 기존 브랜치에
@@ -180,6 +219,33 @@ chart-dark.svg
 
 `OWNER`와 `REPOSITORY`만 바꾸면 됩니다. 비공개 저장소의 raw 파일은 인증이
 필요하므로 외부 페이지에서는 이미지가 표시되지 않을 수 있습니다.
+
+위 예시는 기본 Date/선형 그래프입니다. 다른 정적 보기를 사용하려면 밝은·어두운
+테마 파일명을 다음 중 같은 조합으로 바꿉니다.
+
+| 보기 | 밝은 테마 | 어두운 테마 |
+| --- | --- | --- |
+| Date, 로그 | `chart-log.svg` | `chart-log-dark.svg` |
+| Timeline, 선형 | `chart-timeline.svg` | `chart-timeline-dark.svg` |
+| Timeline, 로그 | `chart-timeline-log.svg` | `chart-timeline-log-dark.svg` |
+
+README에 삽입된 이미지는 대화형 보기 전환을 안정적으로 실행할 수 없습니다.
+모든 조합이 함께 생성되므로 수집 workflow를 다시 실행하지 않고 README 주소만
+바꿔 선택할 수 있습니다.
+
+모든 그래프의 범례를 오른쪽 아래로 옮기려면 복사한 파일에 선택 입력을
+추가합니다.
+
+```yaml
+jobs:
+  update:
+    uses: kernalix7/GH-Star-History-for-Actions/.github/workflows/reusable-star-history.yml@main
+    with:
+      legend-position: bottom-right
+```
+
+같은 `with` 블록에서 `title`, `width`, `height`도 지정할 수 있습니다. 블록을
+생략하면 기존의 무설정 기본값을 사용합니다.
 
 ### 자동으로 갱신되는 범위
 

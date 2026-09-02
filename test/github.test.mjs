@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getAllCurrentStargazerDates, getCurrentStarCount, GitHubApiError } from "../src/github.mjs";
+import {
+  getAllCurrentStargazerDates,
+  getCurrentStarCount,
+  getOwnerAvatarDataUrl,
+  GitHubApiError,
+} from "../src/github.mjs";
 
 test("stargazer collection follows pagination without retaining users", async () => {
   const originalFetch = globalThis.fetch;
@@ -75,6 +80,65 @@ test("API errors expose GitHub's accepted permissions hint", async () => {
     await assert.rejects(
       getAllCurrentStargazerDates("owner/repo", "test-token"),
       (error) => error instanceof GitHubApiError && error.permissions === "metadata=read; contents=write",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("owner avatars are fetched without forwarding the repository token", async () => {
+  const originalFetch = globalThis.fetch;
+  let request;
+  globalThis.fetch = async (url, options) => {
+    request = { url: String(url), options };
+    return new Response(new Uint8Array([137, 80, 78, 71]), {
+      status: 200,
+      headers: { "content-type": "image/png", "content-length": "4" },
+    });
+  };
+
+  try {
+    const dataUrl = await getOwnerAvatarDataUrl(
+      "https://avatars.githubusercontent.com/u/123?v=4",
+    );
+    assert.equal(dataUrl, "data:image/png;base64,iVBORw==");
+    assert.equal(new URL(request.url).searchParams.get("s"), "44");
+    assert.equal(request.options.headers.Authorization, undefined);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("owner avatar fetching rejects non-GitHub hosts before requesting them", async () => {
+  const originalFetch = globalThis.fetch;
+  let fetched = false;
+  globalThis.fetch = async () => {
+    fetched = true;
+    return new Response();
+  };
+
+  try {
+    await assert.rejects(
+      getOwnerAvatarDataUrl("https://example.com/avatar.png"),
+      /unsupported owner avatar URL/,
+    );
+    assert.equal(fetched, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("owner avatar fetching rejects oversized images", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(new Uint8Array([1]), {
+    status: 200,
+    headers: { "content-type": "image/png", "content-length": String(300 * 1024) },
+  });
+
+  try {
+    await assert.rejects(
+      getOwnerAvatarDataUrl("https://avatars.githubusercontent.com/u/123"),
+      /safe size limit/,
     );
   } finally {
     globalThis.fetch = originalFetch;
