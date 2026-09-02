@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="chart-title chart-desc" data-mode="date" data-scale="linear" data-legend-position="top-left" style="stroke-width:3; font-family:'GH Star Hand'; background:#ffffff">
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600" viewBox="0 0 900 600" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="chart-title chart-desc" data-mode="date" data-scale="log" data-legend-position="top-left" style="stroke-width:3; font-family:'GH Star Hand'; background:#ffffff">
   <title id="chart-title">Star History — kernalix7/GH-Star-History-for-Actions</title>
   <desc id="chart-desc">kernalix7/GH-Star-History-for-Actions has 0 stars as of 2026-09-02. Data before 2026-09-02 is reconstructed from currently active stargazers.</desc>
   <metadata id="project-metadata">
@@ -41,12 +41,7 @@
     </g>
     <g class="yaxis" fill="none" font-size="10" text-anchor="end">
       <path class="domain" stroke="#000000" d="M-1,490.5H0.5V0.5H-1" filter="url(#xkcdify)"/>
-      <g class="tick" opacity="1" transform="translate(0,490.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em"></text></g>
-      <g class="tick" opacity="1" transform="translate(0,392.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0.2</text></g>
-      <g class="tick" opacity="1" transform="translate(0,294.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0.4</text></g>
-      <g class="tick" opacity="1" transform="translate(0,196.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0.6</text></g>
-      <g class="tick" opacity="1" transform="translate(0,98.49999999999997)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0.8</text></g>
-      <g class="tick" opacity="1" transform="translate(0,0.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">1</text></g>
+      <g class="tick" opacity="1" transform="translate(0,490.5)"><line stroke="#000000" x2="-1"/><text class="axis-tick" x="-7" dy="0.32em">0</text></g>
     </g>
     <path class="xkcd-chart-xyline" d="M400,490Z" fill="none" stroke="#dd4528" filter="url(#xkcdify)"/>
     <circle class="single-point" cx="400" cy="490" r="4" fill="#dd4528" filter="url(#xkcdify)"/>
