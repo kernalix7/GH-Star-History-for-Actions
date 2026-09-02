@@ -43,24 +43,38 @@ jobs:
             exit 1
           fi
 
+          previous_tag="$(
+            git describe --tags --abbrev=0 "${RELEASE_TAG}^" 2>/dev/null || true
+          )"
+          if test -n "${previous_tag}"; then
+            commit_range="${previous_tag}..${release_sha}"
+          else
+            commit_range="${release_sha}"
+          fi
+
+          changes="$(
+            while IFS=$'\t' read -r subject short_sha full_sha; do
+              if test "${subject}" = "chore: update star history"; then
+                continue
+              fi
+              printf -- \
+                '- %s ([`%s`](https://github.com/%s/commit/%s))\n' \
+                "${subject}" "${short_sha}" "${REPOSITORY}" "${full_sha}"
+            done < <(
+              git log --no-merges \
+                --pretty=tformat:'%s%x09%h%x09%H' \
+                "${commit_range}"
+            )
+          )"
+          if test -z "${changes}"; then
+            changes="- No user-facing commits were recorded for this release."
+          fi
+
+          export RELEASE_SHA="${release_sha}"
+          export CHANGES="${changes}"
           release_notes="$(
-            printf '%s\n' \
-              '## Pin this release' \
-              '' \
-              'Full commit SHA:' \
-              '' \
-              '```text' \
-              "${release_sha}" \
-              '```' \
-              '' \
-              'Use this exact version in a target repository:' \
-              '' \
-              '```yaml' \
-              "uses: ${REPOSITORY}/.github/workflows/reusable-star-history.yml@${release_sha}" \
-              '```' \
-              '' \
-              'The install template intentionally continues to use `@main` for automatic updates.' \
-              'Replace only its ref when you intentionally want to pin a target repository.'
+            node scripts/render-release-notes.mjs \
+              .github/release-notes-template.md
           )"
 
           gh release create "${RELEASE_TAG}" \

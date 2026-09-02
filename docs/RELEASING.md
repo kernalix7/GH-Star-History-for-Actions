@@ -13,10 +13,15 @@ git push origin v0.1.0
 ```
 
 The tag push runs `.github/workflows/release.yml`. It verifies the tag, creates
-the GitHub Release, generates change notes, and prepends both:
+the GitHub Release, generates GitHub's change notes, and prepends a structured
+project overview containing:
 
+- project highlights and installation instructions;
 - the exact 40-character commit SHA resolved from the tag;
-- a copy-ready reusable-workflow reference pinned to that SHA.
+- both the default `@main` reference and a copy-ready immutable SHA reference;
+- meaningful commit subjects since the previous release, excluding generated
+  Star-history commits;
+- data-accuracy, privacy, security, and licensing notes.
 
 The distributed install template in `examples/star-history.yml` intentionally
 stays on `@main`. This keeps the default installation simple and automatically
@@ -56,11 +61,14 @@ git push origin v0.1.0
 ```
 
 태그를 push하면 `.github/workflows/release.yml`이 실행됩니다. 태그를 확인하고
-GitHub Release와 변경 내역을 생성하며, 릴리즈 설명 맨 위에 다음 내용을 자동으로
-추가합니다.
+GitHub Release와 GitHub 변경 내역을 생성하며, 릴리즈 설명 맨 위에 다음 내용을
+구조화해 자동으로 추가합니다.
 
+- 프로젝트 주요 기능과 설치 방법
 - 태그가 실제로 가리키는 40자리 전체 커밋 SHA
-- 해당 SHA로 고정된 재사용 workflow의 복사용 `uses:` 문구
+- 기본 `@main` 문구와 해당 SHA로 고정된 복사용 `uses:` 문구
+- 이전 릴리즈 이후의 주요 커밋 목록(자동 그래프 갱신 커밋 제외)
+- 데이터 정확도, 개인정보 보호, 보안 및 라이선스 안내
 
 배포용 `examples/star-history.yml`은 의도적으로 `@main`을 유지합니다. 기본 설치는
 간단하게 자동 업데이트를 받고, 고정이 필요한 사용자는 릴리즈 설명의 SHA 문구만

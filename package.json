@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/main.mjs && node --check src/filesystem.mjs && node --check src/github.mjs && node --check src/history.mjs && node --check src/input.mjs && node --check src/render.mjs && node --check src/hand-font.mjs && node --check src/vendor/d3-6.7.0.min.cjs"
+    "check": "node --check src/main.mjs && node --check src/filesystem.mjs && node --check src/github.mjs && node --check src/history.mjs && node --check src/input.mjs && node --check src/render.mjs && node --check src/hand-font.mjs && node --check src/vendor/d3-6.7.0.min.cjs && node --check scripts/render-release-notes.mjs"
   },
   "engines": {
     "node": ">=24"

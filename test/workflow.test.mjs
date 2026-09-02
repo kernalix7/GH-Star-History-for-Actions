@@ -59,8 +59,9 @@ test("manual runs expose safe presentation choices without reducing chart output
 });
 
 test("release notes expose an immutable SHA while the install template follows main", async () => {
-  const [releaseWorkflow, example, releaseGuide] = await Promise.all([
+  const [releaseWorkflow, releaseTemplate, example, releaseGuide] = await Promise.all([
     readFile(".github/workflows/release.yml", "utf8"),
+    readFile(".github/release-notes-template.md", "utf8"),
     readFile("examples/star-history.yml", "utf8"),
     readFile("docs/RELEASING.md", "utf8"),
   ]);
@@ -69,10 +70,11 @@ test("release notes expose an immutable SHA while the install template follows m
   assert.match(releaseWorkflow, /\^\[0-9a-f\]\{40\}\$/);
   assert.match(releaseWorkflow, /--verify-tag/);
   assert.match(releaseWorkflow, /--generate-notes/);
-  assert.match(
-    releaseWorkflow,
-    /reusable-star-history\.yml@\$\{release_sha\}/,
-  );
+  assert.match(releaseWorkflow, /scripts\/render-release-notes\.mjs/);
+  assert.match(releaseWorkflow, /git log --no-merges/);
+  assert.match(releaseWorkflow, /chore: update star history/);
+  assert.match(releaseTemplate, /reusable-star-history\.yml@main/);
+  assert.match(releaseTemplate, /reusable-star-history\.yml@\{\{RELEASE_SHA\}\}/);
   assert.match(example, /reusable-star-history\.yml@main/);
   assert.doesNotMatch(
     example,
